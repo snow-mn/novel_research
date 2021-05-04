@@ -153,6 +153,8 @@ def sort_excel(file_path):
         # A列の国民の祝日・休日月日を基準にして降順(False)にしたデータをresultシートに追加
         df_a.to_excel(writer, sheet_name='sorted', index=False)
 
+    count_word_ranking(file_path)
+
 
 # キーワードの出現回数のランキングを調べる
 def count_word_ranking(file_path):
