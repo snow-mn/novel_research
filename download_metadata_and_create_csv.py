@@ -3,7 +3,7 @@
 
 import requests
 import pandas as pd
-import numpy as pd
+import numpy as np
 import json
 import time as tm
 import datetime
