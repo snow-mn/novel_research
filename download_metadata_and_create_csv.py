@@ -170,7 +170,7 @@ def count_word_ranking(file_path):
         # キーワードの取得
         keywords = row[9].value
         # キーワードが存在しないならパス
-        if keywords is np.nan:
+        if keywords is None:
             # print("キーワードがありませんでした")
             pass
         # キーワドが存在するなら
