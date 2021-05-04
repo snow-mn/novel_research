@@ -200,7 +200,7 @@ def count_word_ranking(file_path):
         writer.writerow(["keyword", "count"])
     # 200位までを書き込む
     for key, count in sorted_dict[0:200]:
-        with open(data_dir + filename, "a", newline="", errors="ignore") as f:
+        with open(keywordcount_csv_path, "a", newline="", errors="ignore") as f:
             writer = csv.writer(f)
             writer.writerow([key, count])
 
