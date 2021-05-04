@@ -3,12 +3,12 @@
 
 import requests
 import pandas as pd
+import numpy as pd
 import json
 import time as tm
 import datetime
 import gzip
 from tqdm import tqdm
-import numpy as np
 import csv
 import openpyxl
 
