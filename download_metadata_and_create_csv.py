@@ -1,5 +1,6 @@
 # 『なろう小説API』を用いて、なろうの『全作品情報データを一括取得する』Pythonスクリプト
-# 2020-04-26更新
+# 取得したメタデータを総合評価順にソート、またキーワードの出現回数もカウントする
+
 import requests
 import pandas as pd
 import json
@@ -7,6 +8,9 @@ import time as tm
 import datetime
 import gzip
 from tqdm import tqdm
+import numpy as np
+import csv
+import openpyxl
 
 tqdm.pandas()
 import xlsxwriter
@@ -133,6 +137,10 @@ def dump_to_excel(df):
 
         print("Sqlite3形式でデータを保存しました")
 
+    sort_excel(data_dir + filename)
+
+
+# メタデータファイルを総合評価ポイントの降順にソート
 def sort_excel(file_path):
     # DataFrameにExcelの読み込み
     df = pd.read_excel(file_path, sheet_name='Sheet1', engine='openpyxl')
@@ -143,7 +151,57 @@ def sort_excel(file_path):
     # ExcelWriterを追加することで、SaveとCloseの必要がなくなる。またengineをopenpyxlに指定ができる
     with pd.ExcelWriter(file_path, engine='openpyxl', mode='a') as writer:
         # A列の国民の祝日・休日月日を基準にして降順(False)にしたデータをresultシートに追加
-        df_a.to_excel(writer, sheet_name='result', index=False)
+        df_a.to_excel(writer, sheet_name='sorted', index=False)
+
+
+# キーワードの出現回数のランキングを調べる
+def count_word_ranking(file_path):
+    # エクセルデータの取得
+    wb = openpyxl.load_workbook(file_path)
+    ws = wb["Sheet1"]
+
+    # キーワードと出現回数を入れる辞書の作成
+    keywords_dict = {}
+
+    # 2行目から1行ごとに読み込む
+    for row in ws.iter_rows(min_row=2):
+        # キーワードの取得
+        keywords = row[9].value
+        # キーワードが存在しないならパス
+        if keywords is np.nan:
+            # print("キーワードがありませんでした")
+            pass
+        # キーワドが存在するなら
+        else:
+            # " "を区切り文字として分割してリスト化
+            keywords_list = keywords.split(" ")
+            # print(keywords_list)
+            # 辞書内の各キーワードについて
+            for key in keywords_list:
+                # print(key)
+                # 辞書内にキーワードが含まれていなければ追加、含まれていれば回数+1
+                if key in keywords_dict:
+                    keywords_dict[key] = keywords_dict[key] + 1
+                else:
+                    keywords_dict[key] = 1
+
+    # print(keywords_dict)
+    # 出現回数降順にソート
+    # keywords_dict = {key, count for key, count in keywords_dict.items() if count >= 10000}
+    sorted_dict = sorted(keywords_dict.items(), key=lambda x: x[1], reverse=True)
+    # print(sorted_dict)
+
+    # ファイル生成
+    keywordcount_csv_path = data_dir + "keyword_count.csv" % now_day
+    with open(keywordcount_csv_path, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["keyword", "count"])
+    # 200位までを書き込む
+    for key, count in sorted_dict[0:200]:
+        with open(data_dir + filename, "a", newline="", errors="ignore") as f:
+            writer = csv.writer(f)
+            writer.writerow([key, count])
+
 
 
 #######　関数の実行を指定　##########
