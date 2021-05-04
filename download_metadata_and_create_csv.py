@@ -194,7 +194,7 @@ def count_word_ranking(file_path):
     # print(sorted_dict)
 
     # ファイル生成
-    keywordcount_csv_path = data_dir + "keyword_count.csv" % now_day
+    keywordcount_csv_path = data_dir + "keyword_count_%s.csv" % now_day
     with open(keywordcount_csv_path, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["keyword", "count"])
