@@ -54,7 +54,7 @@ def second_function(keyword):
     wb = openpyxl.load_workbook(narou_data_path)
     ws = wb["sorted"]
     # 行ごとに取得
-    for row in tqdm(ws.iter_rows(min_row=2)):
+    for row in tqdm.tqdm(ws.iter_rows(min_row=2)):
         # 各種メタデータの値の取得
         title = row[1].value
         ncode = row[2].value
