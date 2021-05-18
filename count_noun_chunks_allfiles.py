@@ -9,8 +9,8 @@ import re
 import tqdm
 
 # パス
-data_dir = "Data/"
-text_dir = "Text/"
+data_dir = "../novel_Data/"
+text_dir = "../novel_Text/"
 noun_chunks_count_data_dir = data_dir + "noun_chunks_count_data/"
 noun_chunks_total_count_data_dir = data_dir + "noun_chunks_total_count_data/"
 

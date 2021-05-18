@@ -9,8 +9,8 @@ import tqdm
 import time
 
 # パス
-data_dir = "Data/"
-text_dir = "Text/"
+data_dir = "../novel_Data/"
+text_dir = "../novel_Text/"
 all_noun_count_data_dir = data_dir + "all_noun_count_data/"
 all_noun_total_count_data_dir = data_dir + "all_noun_total_count_data/"
 

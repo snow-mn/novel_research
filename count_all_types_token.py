@@ -11,8 +11,8 @@ import tqdm
 extract_target = "NOUN"
 
 # パス
-data_dir = "Data/"
-text_dir = "Text/"
+data_dir = "../novel_Data/"
+text_dir = "../novel_Text/"
 token_count_data_dir = data_dir + extract_target + "_count_data/"
 token_total_count_data_dir = data_dir + extract_target + "_total_count_data/"
 
