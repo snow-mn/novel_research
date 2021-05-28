@@ -7,18 +7,17 @@ import time as tm
 import datetime
 import gzip
 from tqdm import tqdm
-
-tqdm.pandas()
-
 import os
 import psycopg2
 from sqlalchemy import create_engine
+
+tqdm.pandas()
 
 # パス
 DATABASE_URL = "postgresql://{postgres}:{password}@{localhost}:{5432}/{narou_data}"
 
 # リクエストの秒数間隔(1以上を推奨)
-interval = 2
+interval = 1
 
 ### なろう小説API・なろう１８禁小説API を設定 ####
 is_narou = True
@@ -36,27 +35,13 @@ connection_config = {
 }
 
 if is_narou:
-    filename = 'Narou_All_OUTPUT_%s.xlsx' % now_day
-    sql_filename = 'Narou_All_OUTPUT_%s.sqlite3' % now_day
     api_url = "https://api.syosetu.com/novelapi/api/"
 else:
-    filename = 'Narou_18_ALL_OUTPUT_%s.xlsx' % now_day
-    sql_filename = 'Narou_18_ALL_OUTPUT_%s.sqlite3' % now_day
     api_url = "https://api.syosetu.com/novel18api/api/"
-
-# データをSqlite3形式でも保存する
-is_save_sqlite = False
 
 
 #####　以上設定、以下関数　##############
 
-# Dataframeにリストを挿入するための偽オブジェクト
-class Fake(object):
-    def __init__(self, li_obj):
-        self.obj= li_obj
-
-    def getlist(self):
-        return self.obj
 
 # データベースに接続
 def get_connection():
@@ -69,7 +54,7 @@ def get_all_novel_info():
     # print(df)
 
     # 出力パラメータの設定
-    payload = {'out': 'json', 'gzip': 5, 'of': 'n', 'lim': 1, "min_globalpoint": 100000, "length": -100000}
+    payload = {'out': 'json', 'gzip': 5, 'of': 'n', 'lim': 1}
     # レスポンスをcontent形式で取得
     res = requests.get(api_url, params=payload).content
     # 解凍して展開、デコード
@@ -89,7 +74,7 @@ def get_all_novel_info():
 
     # 進捗表示しながら繰り返し処理
     for i in tqdm(range(all_queue_cnt)):
-        payload = {'out': 'json', 'gzip': 5, 'opt': 'weekly', 'lim': 500, 'lastup': "1073779200-" + str(lastup), "min_globalpoint": 100000, "length": -100000}
+        payload = {'out': 'json', 'gzip': 5, 'opt': 'weekly', 'lim': 500, 'lastup': "1073779200-" + str(lastup)}
 
         # なろうAPIにリクエスト
         cnt = 0
@@ -148,10 +133,7 @@ def dump_to_postgresql(df):
     print("export_start", datetime.datetime.now())
     # データベース接続の準備
     engine = create_engine("postgresql://{user}:{password}@{host}:{port}/{dbname}".format(**connection_config))
-    try:
-        pass
-    except:
-        pass
+
     # PostgreSQLのテーブルにDataFrameを追加する
     df.to_sql("metadata", con=engine, if_exists='append', index=False)
     print('取得成功数  ', len(df));
