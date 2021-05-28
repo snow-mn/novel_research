@@ -112,8 +112,7 @@ def get_all_novel_info():
         # 取得間隔を空ける
         tm.sleep(interval)
 
-    # dump_to_excel(df)
-    print(df)
+    # PostgreSQLに書き込む
     dump_to_postgresql(df)
 
 
