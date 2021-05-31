@@ -13,8 +13,6 @@ from sqlalchemy import create_engine
 
 tqdm.pandas()
 
-# パス
-DATABASE_URL = "postgresql://{postgres}:{password}@{localhost}:{5432}/{narou_data}"
 
 # リクエストの秒数間隔(1以上を推奨)
 interval = 1
@@ -42,11 +40,6 @@ else:
 
 #####　以上設定、以下関数　##############
 
-
-# データベースに接続
-def get_connection():
-    dsn = os.environ.get("DATABASE_URL")
-    return psycopg2.connect(dsn)
 
 # 全作品情報の取得
 def get_all_novel_info():
