@@ -13,7 +13,6 @@ from sqlalchemy import create_engine
 
 tqdm.pandas()
 
-
 # リクエストの秒数間隔(1以上を推奨)
 interval = 1
 
