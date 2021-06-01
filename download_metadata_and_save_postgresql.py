@@ -7,8 +7,6 @@ import time as tm
 import datetime
 import gzip
 from tqdm import tqdm
-import os
-import psycopg2
 from sqlalchemy import create_engine
 
 tqdm.pandas()
