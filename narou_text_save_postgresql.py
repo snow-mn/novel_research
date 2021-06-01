@@ -53,7 +53,7 @@ def fetch_novel(ncode):
         # 本文を入れる変数
         zenbun = ""
         # 本文取得
-        for part in tqdm.tqdm(range(1, num_parts + 1)):
+        for part in tqdm(range(1, num_parts + 1)):
             # 作品本文ページのURL
             url = "https://ncode.syosetu.com/{}/{:d}/".format(ncode, part)
             res = request.urlopen(url)
