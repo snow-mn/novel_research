@@ -1,13 +1,13 @@
 # 本文テキストをpostgresqlに格納するプログラム
 
-import os
-import csv
 import time
 import re
 from urllib import request
 from urllib import error
 from bs4 import BeautifulSoup
-import openpyxl
+import pandas as pd
+import psycopg2
+from sqlalchemy import create_engine
 from tqdm import tqdm
 
 # データベースの接続情報
@@ -20,81 +20,28 @@ connection_config = {
 }
 
 
-
-# これを最初に呼び出す
-def first_function(csv_path):
-    csv_file = open(csv_path, "r", errors="", newline="")
-    f = csv.reader(csv_file, delimiter=",", doublequote=True, lineterminator="\r\n", quotechar='"',
-                   skipinitialspace=True)
-    header = next(f)
-    # print(header)
-    count = 0
-    for row in f:
-        count += 1
-        if count > 100:
-            exit()
-        else:
-            # キーワードのディレクトリが存在していないなら作成
-            if os.path.exists(text_dir + row[0]):
-                pass
-            else:
-                make_dir(row[0])
-            # キーワードディレクトリ内に既に100個のファイルがあるならパス
-            if sum(os.path.isfile(os.path.join(text_dir + row[0], name)) for name in os.listdir(text_dir + row[0])) < 100:
-                # rowはList
-                # row[0]で必要な項目を取得することができる
-                second_function(row[0])
-            else:
-                pass
+# postgreSQLからデータを取得
+def get_postgresql_data(connection):
+    # DataFrameでロード（総合評価ポイント降順にソート）
+    df = pd.read_sql(sql="SELECT ncode FROM metadata ORDER BY global_point DESC;", con=connection)
+    # print(df[["title", "global_point"]])
+    return df
 
 
-# ディレクトリ生成
-def make_dir(keyword):
-    path = text_dir + keyword
-    os.mkdir(path)
-
-
-# 2段階目の関数
-# なろうメタデータファイルからメタデータを取得して小説本文のダウンロード
-def second_function(keyword):
-    # エクセルデータファイルの取得
-    wb = openpyxl.load_workbook(narou_data_path)
-    ws = wb["sorted"]
-    # 行ごとに取得
-    for row in tqdm.tqdm(ws.iter_rows(min_row=2)):
-        # 各種メタデータの値の取得
-        title = row[1].value
-        ncode = row[2].value
-        keyword_text = row[9].value
-        general_all_no = row[14].value
-        length = row[15].value
-
-        # キーワードが存在するなら分割
-        if keyword_text is not None:
-            keywords = keyword_text.split(" ")
-
-            # 該当キーワードが付与されている小説かつ掲載部分数が1より大きい（短編ではない）
-            # 文字数に条件を設けるか
-            if keyword in keywords and general_all_no > 1 and length < 100000:
-                # ディレクトリ内のファイル数が100を超えないように
-                if sum(os.path.isfile(os.path.join(text_dir + keyword, name)) for name in os.listdir(text_dir + keyword)) < 100:
-                    if os.path.exists(text_dir + keyword + "/" + ncode + ".txt"):
-                        pass
-                    else:
-                        print(ncode + ":" + title + "のダウンロードを開始します")
-                        fetch_novel(keyword, ncode)
-                        print(ncode + ":" + title + "のダウンロードが終了しました")
-                else:
-                    pass
-            else:
-                pass
-        else:
-            pass
-
+# 既に本文データがPostgreSQLに格納されているかの判定
+def check_existed(connection, ncode):
+    cur = connection.cursor()
+    # 既に格納されていればTrueを返すSQL文
+    cur.execute("SELECT EXISTS (SELECT * FROM text_data WHERE ncode = '%s');" % ncode)
+    # 結果の取得
+    result = cur.fetchone()
+    # curを閉じる
+    cur.close()
+    return result
 
 
 # 小説本文の取得
-def fetch_novel(keyword, ncode):
+def fetch_novel(ncode):
     # 例外処理
     try:
         # 全部分数を取得
@@ -103,31 +50,70 @@ def fetch_novel(keyword, ncode):
         soup = BeautifulSoup(info_res, "html.parser")
         pre_info = soup.select_one("#pre_info").text
         num_parts = int(re.search(r"全([0-9]+)部分", pre_info).group(1))
+        # 本文を入れる変数
+        zenbun = ""
         # 本文取得
-        with open(text_dir + keyword + "/" + ncode + ".txt", "w", encoding="utf-8") as f:
-            for part in range(1, num_parts + 1):
-                # 作品本文ページのURL
-                url = "https://ncode.syosetu.com/{}/{:d}/".format(ncode, part)
-
-                res = request.urlopen(url)
-                soup = BeautifulSoup(res, "html.parser")
-
-                # CSSセレクタで本文を指定
-                honbun = soup.select_one("#novel_honbun").text
-                honbun += "\n"  # 次の部分との間は念のため改行しておく
-
-                # 保存
-                f.write(honbun)
-
-                print("part {:d} downloaded (total: {:d} parts)".format(part, num_parts))  # 進捗を表示
-
-                time.sleep(0.1)  # 次の部分取得までは1秒間の時間を空ける
+        for part in range(1, num_parts + 1):
+            # 作品本文ページのURL
+            url = "https://ncode.syosetu.com/{}/{:d}/".format(ncode, part)
+            res = request.urlopen(url)
+            soup = BeautifulSoup(res, "html.parser")
+            # CSSセレクタで本文を指定
+            honbun = soup.select_one("#novel_honbun").text
+            # 次の部分との間は念のため改行しておく
+            honbun += "\n"
+            # 本文に追加
+            zenbun = zenbun + honbun
+            # 進捗を表示
+            print("part {:d} downloaded (total: {:d} parts)".format(part, num_parts))
+            # 次の部分取得までは1秒間の時間を空ける
+            time.sleep(0.01)
     except error.HTTPError as e:
         print("エラー : ", e)
 
-first_function(csv_path)
+    # 空白文字を取り除く（全角スペース、半角スペース①,②、タブ文字）
+    zenbun = re.sub(r"[\u3000\u0020\u00A0\t]", "", zenbun)
+    # 改行文字で分割してリスト化
+    lines = zenbun.split("\n")
+    # 空白行を削除
+    result = [line for line in lines if line != ""]
+    # print(result)
+    print("%sの長さは%s行でした" % (ncode, len(result)))
+    return result
+
+
+# 本文データをPostgreSQLに格納する関数
+def dump_to_postgresql(ncode, lines):
+    # DataFrameの作成
+    df = pd.DataFrame(columns=["ncode", "honbun"])
+    # DataFrameに追加
+    df.loc[0] = [ncode, lines]
+    # データベース接続の準備
+    engine = create_engine("postgresql://{user}:{password}@{host}:{port}/{dbname}".format(**connection_config))
+
+    # PostgreSQLのテーブルにDataFrameを追加する
+    df.to_sql("text_data", con=engine, if_exists='append', index=False)
+    print('取得成功数  ', len(df));
+    print("データベースにデータを保存しました")
 
 
 # メイン関数
-def main_function():
-    pass
+def main():
+    print("PostgreSQLに接続しています")
+    # PostgreSQLに接続
+    connection = psycopg2.connect(**connection_config)
+    # PostgreSQLからメタデータの取得
+    df = get_postgresql_data(connection)
+    for ncode in df["ncode"]:
+        # 該当作品の本文データが既にデータベースに存在していなければ
+        if not check_existed(connection, ncode)[0]:
+            print("%sの小説本文のダウンロードを開始します" % ncode)
+            lines = fetch_novel(ncode)
+            # PostgreSQLに本文データを格納
+            dump_to_postgresql(ncode, lines)
+        else:
+            print("%sの本文データは既にデータベースに存在しています" % ncode)
+
+
+# 実行
+main()
