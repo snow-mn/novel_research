@@ -93,7 +93,6 @@ def dump_to_postgresql(ncode, lines):
 
     # PostgreSQLのテーブルにDataFrameを追加する
     df.to_sql("text_data", con=engine, if_exists='append', index=False)
-    print('取得成功数  ', len(df));
     print("データベースにデータを保存しました")
 
 
