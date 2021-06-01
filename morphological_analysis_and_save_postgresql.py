@@ -3,10 +3,12 @@
 import spacy
 import os
 import pandas as pd
-import tqdm
 import psycopg2
 from sqlalchemy import create_engine
 from tqdm import tqdm
+
+# テキストファイルのパス
+text_dir = "../novel_Text/"
 
 # データベースの接続情報
 connection_config = {
@@ -22,11 +24,34 @@ connection_config = {
 df_columns = ["ncode", "line_num", "tok_index", "tok_text", "tok_orth", "tok_lemma", "tok_tag", "tok_head_index", "tok_dep", "tok_norm", "tok_ent_iob", "tok_ent_type"]
 
 
+# ファイル一覧を取得
+def load_file_list():
+    # ディレクトリ内のディレクトリとファイルの一覧を取得
+    file_dir_list = os.listdir(text_dir)
+    # ファイル名のみの一覧を取得
+    file_list = [f for f in file_dir_list if os.path.isfile(os.path.join(text_dir, f))]
+    # print(files)
+    return file_list
+
+
+# 作品ファイルリストから順に小説本文データを取得する
+def get_novel_text():
+    for file_name in load_file_list():
+        # ファイルパス
+        file_path = text_dir + file_name
+        # 行を入れるリスト
+        lines = []
+        # 1行ごとに読み込みリストに入れる
+        with open(file_path, mode="rt", encoding="utf-8") as f:
+            lines.append(f.readlines())
+        
+
+
 # 形態素解析
 def morphological_analysis(ncode, lines):
     # ginzaの準備
     nlp = spacy.load("ja_ginza")
-    # dataframeの作成
+    # DataFrameの作成
     ma_df = pd.DataFrame(columns=df_columns)
     # 何行目かカウントする変数
     line_num = 0
@@ -69,7 +94,6 @@ def morphological_analysis(ncode, lines):
     dump_to_postgresql(ncode, ma_df)
 
 
-
 # データベースに格納する関数
 def dump_to_postgresql(ncode, ma_df):
     print("データベースに接続開始します")
@@ -78,7 +102,7 @@ def dump_to_postgresql(ncode, ma_df):
     # PostgreSQLのテーブルにDataFrameを追加する
     ma_df.to_sql("metadata", con=engine, if_exists='append', index=False)
     print("取得トークン数  ", len(ma_df));
-    print("データベースにデータを保存しました")
+    print("データベースに%sのデータを保存しました" % ncode)
 
 
 # メイン関数
