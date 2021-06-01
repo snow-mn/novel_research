@@ -65,7 +65,7 @@ def fetch_novel(ncode):
             # 本文に追加
             zenbun = zenbun + honbun
             # 進捗を表示
-            print("part {:d} downloaded (total: {:d} parts)".format(part, num_parts))
+            # print("part {:d} downloaded (total: {:d} parts)".format(part, num_parts))
             # 次の部分取得までは1秒間の時間を空ける
             time.sleep(0.01)
     except error.HTTPError as e:
