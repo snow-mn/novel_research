@@ -3,7 +3,6 @@
 import spacy
 import os
 import pandas as pd
-import psycopg2
 from sqlalchemy import create_engine
 from tqdm import tqdm
 
