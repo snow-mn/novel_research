@@ -23,8 +23,7 @@ connection_config = {
 # postgreSQLからデータを取得
 def get_postgresql_data(connection):
     # DataFrameでロード（総合評価ポイント降順にソート）
-    df = pd.read_sql(sql="SELECT ncode FROM metadata ORDER BY global_point DESC;", con=connection)
-    # print(df[["title", "global_point"]])
+    df = pd.read_sql(sql="SELECT ncode, novel_type FROM metadata ORDER BY global_point DESC;", con=connection)
     return df
 
 
@@ -85,6 +84,31 @@ def fetch_novel(ncode):
     return result
 
 
+# 小説本文の取得（短編用）
+def fetch_novel2(ncode):
+    # 例外処理
+    try:
+        # 本文取得
+        # 作品本文ページのURL
+        url = "https://ncode.syosetu.com/{}/".format(ncode)
+        res = request.urlopen(url)
+        soup = BeautifulSoup(res, "html.parser")
+        # CSSセレクタで本文を指定
+        zenbun = soup.select_one("#novel_honbun").text
+    except error.HTTPError as e:
+        print("エラー : ", e)
+
+    # 空白文字を取り除く（全角スペース、半角スペース①,②、タブ文字）
+    zenbun = re.sub(r"[\u3000\u0020\u00A0\t]", "", zenbun)
+    # 改行文字で分割してリスト化
+    lines = zenbun.split("\n")
+    # 空白行を削除
+    result = [line for line in lines if line != ""]
+    print(result)
+    print("%sの長さは%s行でした" % (ncode, len(result)))
+    return result
+
+
 # 本文データをPostgreSQLに格納する関数
 def dump_to_postgresql(ncode, lines):
     # DataFrameの作成
@@ -106,11 +130,27 @@ def main():
     connection = psycopg2.connect(**connection_config)
     # PostgreSQLからメタデータの取得
     df = get_postgresql_data(connection)
-    for ncode in df["ncode"]:
+    # ncodeのリスト
+    ncode_list = df["ncode"].to_list()
+    # novel_typeのリスト
+    novel_type_list = df["novel_type"].to_list()
+    # (ncode, novel_type)とするためのリスト
+    data_list = []
+    # データ数だけ繰り返す
+    for i in range(len(ncode_list)):
+        # (ncode, novel_type)を追加していく
+        data_list.append([ncode_list[i], novel_type_list[i]])
+    # データリストからncode,novel_typeを順々に読み込んでいく
+    for ncode, novel_type in data_list:
         # 該当作品の本文データが既にデータベースに存在していなければ
         if not check_existed(connection, ncode)[0]:
             print("%sの小説本文のダウンロードを開始します" % ncode)
-            lines = fetch_novel(ncode)
+            if novel_type == 1:
+                lines = fetch_novel(ncode)
+            elif novel_type == 2:
+                lines = fetch_novel2(ncode)
+            else:
+                pass
             # PostgreSQLに本文データを格納
             dump_to_postgresql(ncode, lines)
         else:
