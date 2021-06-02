@@ -49,7 +49,10 @@ def fetch_novel(ncode):
         info_res = request.urlopen(info_url)
         soup = BeautifulSoup(info_res, "html.parser")
         pre_info = soup.select_one("#pre_info").text
-        num_parts = int(re.search(r"全([0-9]+)部分", pre_info).group(1))
+        # 3桁区切りも考慮して全部分数の取得
+        num_parts = re.search(r"全([0-9,]+)部分", pre_info).group(1)
+        # カンマの削除
+        num_parts = int(re.sub(r",", "", num_parts))
         # 本文を入れる変数
         zenbun = ""
         # 本文取得
