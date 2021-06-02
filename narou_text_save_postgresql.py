@@ -130,18 +130,10 @@ def main():
     connection = psycopg2.connect(**connection_config)
     # PostgreSQLからメタデータの取得
     df = get_postgresql_data(connection)
-    # ncodeのリスト
-    ncode_list = df["ncode"].to_list()
-    # novel_typeのリスト
-    novel_type_list = df["novel_type"].to_list()
-    # (ncode, novel_type)とするためのリスト
-    data_list = []
-    # データ数だけ繰り返す
-    for i in range(len(ncode_list)):
-        # (ncode, novel_type)を追加していく
-        data_list.append([ncode_list[i], novel_type_list[i]])
+    # DataFrameをリストに変換
+    df_list = df.to_numpy().tolist()
     # データリストからncode,novel_typeを順々に読み込んでいく
-    for ncode, novel_type in data_list:
+    for ncode, novel_type in df_list:
         # 該当作品の本文データが既にデータベースに存在していなければ
         if not check_existed(connection, ncode)[0]:
             print("%sの小説本文のダウンロードを開始します" % ncode)
