@@ -4,6 +4,7 @@ import spacy
 import os
 import pandas as pd
 from sqlalchemy import create_engine
+import psycopg2
 from tqdm import tqdm
 
 # テキストファイルのパス
@@ -23,27 +24,23 @@ connection_config = {
 df_columns = ["ncode", "line_num", "tok_index", "tok_text", "tok_orth", "tok_lemma", "tok_pos", "tok_tag", "tok_head_index", "tok_dep", "tok_norm", "tok_ent_iob", "tok_ent_type"]
 
 
-# ファイル一覧を取得
-def load_file_list():
-    # ディレクトリ内のディレクトリとファイルの一覧を取得
-    file_dir_list = os.listdir(text_dir)
-    # ファイル名のみの一覧を取得
-    file_list = [f for f in file_dir_list if os.path.isfile(os.path.join(text_dir, f))]
-    # print(files)
-    return file_list
+# postgreSQLからデータを取得
+def get_postgresql_data(connection):
+    # DataFrameでロード（総合評価ポイント降順にソート）
+    df = pd.read_sql(sql="SELECT ncode FROM metadata WHERE ncode IN (SELECT ncode FROM text_data) ORDER BY global_point DESC;", con=connection)
+    return df
 
 
-# 作品ファイルリストから順に小説本文データを取得する
-def get_novel_text():
-    for file_name in load_file_list():
-        # ファイルパス
-        file_path = text_dir + file_name
-        # 行を入れるリスト
-        lines = []
-        # 1行ごとに読み込みリストに入れる
-        with open(file_path, mode="rt", encoding="utf-8") as f:
-            lines.append(f.readlines())
-        
+# 既に形態素解析データがPostgreSQLに格納されているかの判定
+def check_existed(connection, ncode):
+    cur = connection.cursor()
+    # 既に格納されていればTrueを返すSQL文
+    cur.execute("SELECT EXISTS (SELECT * FROM ma_data WHERE ncode = '%s');" % ncode)
+    # 結果の取得
+    result = cur.fetchone()
+    # curを閉じる
+    cur.close()
+    return result
 
 
 # 形態素解析
@@ -59,30 +56,6 @@ def morphological_analysis(ncode, lines):
         doc = nlp(line)
         # 各トークンの情報を取得
         for tok in doc:
-            print(
-                tok.i,  # 親ドキュメント内のトークンのインデックス。
-                tok.text,  # 逐語的なテキストコンテンツ
-
-                # 逐語的なテキストコンテンツ（Token.textと同じ）
-                # 主に他の属性との一貫性のために存在します。
-                tok.orth_,
-
-                tok.lemma_,  # 語尾変化のない接尾辞のない、トークンの基本形式
-                tok.pos_,  # 品詞（英語の大文字）
-                tok.tag_,  # きめの細かい品詞
-                tok.head.i,  # headはこのトークンの構文上の親、または「ガバナー」
-                tok.dep_,  # 構文従属関係
-
-                # トークンの基準、つまりトークンテキストの正規化された形式
-                # 通常、言語のトークナイザー例外またはノルム例外で設定されます。
-                tok.norm_,
-
-                # 名前付きエンティティタグのIOBコード
-                # 「B」はトークンがエンティティを開始することを意味し、「I」はそれがエンティティの内部にあることを意味し、
-                # 「O」はそれがエンティティの外部にあることを意味し、「」はエンティティタグが設定されていないことを意味します。
-                tok.ent_iob_,
-                tok.ent_type_,  # 名前付きエンティティタイプ
-            )
             # トークン情報をまとめたリスト
             token_info = [ncode, line_num, tok.i, tok.text, tok.orth_, tok.lemma_, tok.pos_, tok.tag_, tok.head.i, tok.dep_, tok.norm_, tok.ent_.iob_, tok.ent_.type_]
             # DataFrameのline_num行目に追加
@@ -95,15 +68,35 @@ def morphological_analysis(ncode, lines):
 
 # データベースに格納する関数
 def dump_to_postgresql(ncode, ma_df):
-    print("データベースに接続開始します")
+    # DataFrameの作成
+    df = pd.DataFrame(columns=["ncode", "honbun"])
+    # DataFrameに追加
+    df.loc[0] = [ncode, lines]
     # データベース接続の準備
     engine = create_engine("postgresql://{user}:{password}@{host}:{port}/{dbname}".format(**connection_config))
     # PostgreSQLのテーブルにDataFrameを追加する
-    ma_df.to_sql("metadata", con=engine, if_exists='append', index=False)
-    print("取得トークン数  ", len(ma_df));
-    print("データベースに%sのデータを保存しました" % ncode)
+    df.to_sql("ma_data", con=engine, if_exists='append', index=False)
+    print("データベースにデータを保存しました")
 
 
 # メイン関数
-def main_function():
-    pass
+def main():
+    print("PostgreSQLに接続しています")
+    # PostgreSQLに接続
+    connection = psycopg2.connect(**connection_config)
+    # PostgreSQLからメタデータの取得
+    df = get_postgresql_data(connection)
+    # データリストからncodeを順々に読み込んでいく
+    for ncode in df["ncode"]:
+        # 該当作品の形態素解析データが既にデータベースに存在していなければ
+        if not check_existed(connection, ncode)[0]:
+            print("%sの小説本文のダウンロードを開始します" % ncode)
+            ma_df = morphological_analysis(ncode)
+            # PostgreSQLに形態素解析データを格納
+            dump_to_postgresql(ncode, ma_df)
+        else:
+            print("%sの形態素解析データは既にデータベースに存在しています" % ncode)
+
+
+# 実行
+main()

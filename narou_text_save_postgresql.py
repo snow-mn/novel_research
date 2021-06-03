@@ -70,18 +70,22 @@ def fetch_novel(ncode):
             # print("part {:d} downloaded (total: {:d} parts)".format(part, num_parts))
             # 次の部分取得までは1秒間の時間を空ける
             time.sleep(0.01)
+
+        # 空白文字を取り除く（全角スペース、半角スペース①,②、タブ文字）
+        zenbun = re.sub(r"[\u3000\u0020\u00A0\t]", "", zenbun)
+        # 改行文字で分割してリスト化
+        lines = zenbun.split("\n")
+        # 空白行を削除
+        result = [line for line in lines if line != ""]
+        # print(result)
+        print("%sの長さは%s行でした" % (ncode, len(result)))
+        return result
+
+    # 小説が既に削除されているなどの場合
     except error.HTTPError as e:
         print("エラー : ", e)
-
-    # 空白文字を取り除く（全角スペース、半角スペース①,②、タブ文字）
-    zenbun = re.sub(r"[\u3000\u0020\u00A0\t]", "", zenbun)
-    # 改行文字で分割してリスト化
-    lines = zenbun.split("\n")
-    # 空白行を削除
-    result = [line for line in lines if line != ""]
-    # print(result)
-    print("%sの長さは%s行でした" % (ncode, len(result)))
-    return result
+        result = "deleted"
+        return result
 
 
 # 小説本文の取得（短編用）
@@ -117,10 +121,14 @@ def dump_to_postgresql(ncode, lines):
     df.loc[0] = [ncode, lines]
     # データベース接続の準備
     engine = create_engine("postgresql://{user}:{password}@{host}:{port}/{dbname}".format(**connection_config))
-
     # PostgreSQLのテーブルにDataFrameを追加する
     df.to_sql("text_data", con=engine, if_exists='append', index=False)
     print("データベースにデータを保存しました")
+
+
+# 参照した小説が既に削除されている場合に小説情報を削除する関数（仮）
+def delete_metadata(connection, ncode):
+    pass
 
 
 # メイン関数
@@ -143,8 +151,13 @@ def main():
                 lines = fetch_novel2(ncode)
             else:
                 pass
-            # PostgreSQLに本文データを格納
-            dump_to_postgresql(ncode, lines)
+            # 小説が削除されていなければ
+            if lines != "deleted":
+                # PostgreSQLに本文データを格納
+                dump_to_postgresql(ncode, lines)
+            else:
+                # 小説情報を削除するか？
+                delete_metadata(connection, ncode)
         else:
             print("%sの本文データは既にデータベースに存在しています" % ncode)
 
