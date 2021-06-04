@@ -104,11 +104,11 @@ def get_all_novel_info():
         tm.sleep(interval)
 
     # PostgreSQLに書き込む
-    dump_to_postgresql(df)
+    save_postgresql(df)
 
 
 # PostgreSQLに書き込む処理
-def dump_to_postgresql(df):
+def save_postgresql(df):
     # allcount列を削除
     df = df.drop("allcount", axis=1)
     # gensaku列を削除

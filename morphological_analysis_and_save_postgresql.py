@@ -1,14 +1,11 @@
 # 形態素解析を行い、データベースに形態素解析情報を格納するプログラム
 
 import spacy
-import os
 import pandas as pd
 from sqlalchemy import create_engine
 import psycopg2
 from tqdm import tqdm
 
-# テキストファイルのパス
-text_dir = "../novel_Text/"
 
 # データベースの接続情報
 connection_config = {
@@ -20,7 +17,7 @@ connection_config = {
 }
 
 # DataFrameの列名
-# [ncode, line_num, tok.i, tok.text, tok.orth_, tok.lemma_, tok.pos_, tok.tag_, tok.head.i, tok.dep_, tok.norm_, tok.ent_.iob_, tok.ent_.type_]
+# [ncode, line_num, tok.i, tok.text, tok.orth_, tok.lemma_, tok.pos_, tok.tag_, tok.head.i, tok.dep_, tok.norm_, tok.ent_iob_, tok.ent_type_]
 df_columns = ["ncode", "line_num", "tok_index", "tok_text", "tok_orth", "tok_lemma", "tok_pos", "tok_tag", "tok_head_index", "tok_dep", "tok_norm", "tok_ent_iob", "tok_ent_type"]
 
 
@@ -44,7 +41,12 @@ def check_existed(connection, ncode):
 
 
 # 形態素解析
-def morphological_analysis(ncode, lines):
+def morphological_analysis(connection, ncode):
+    # PostgreSQLからDataFrameを取得
+    df = pd.read_sql(sql="SELECT honbun FROM text_data WHERE ncode='%s';" % ncode, con=connection)
+    # DataFrameから本文データを取り出す
+    lines = df["honbun"][0]
+    print(lines)
     # ginzaの準備
     nlp = spacy.load("ja_ginza")
     # DataFrameの作成
@@ -52,30 +54,25 @@ def morphological_analysis(ncode, lines):
     # 何行目かカウントする変数
     line_num = 0
     # 1行ごとに形態素解析を行う
-    for line in tqdm.tqdm(lines):
+    for line in tqdm(lines):
         doc = nlp(line)
         # 各トークンの情報を取得
         for tok in doc:
             # トークン情報をまとめたリスト
-            token_info = [ncode, line_num, tok.i, tok.text, tok.orth_, tok.lemma_, tok.pos_, tok.tag_, tok.head.i, tok.dep_, tok.norm_, tok.ent_.iob_, tok.ent_.type_]
+            token_info = [ncode, line_num, tok.i, tok.text, tok.orth_, tok.lemma_, tok.pos_, tok.tag_, tok.head.i, tok.dep_, tok.norm_, tok.ent_iob_, tok.ent_type_]
             # DataFrameのline_num行目に追加
             ma_df.loc[line_num] = token_info
         # 行数カウントを1増やす
         line_num += 1
-    print(ma_df)
-    dump_to_postgresql(ncode, ma_df)
+    return ma_df
 
 
 # データベースに格納する関数
-def dump_to_postgresql(ncode, ma_df):
-    # DataFrameの作成
-    df = pd.DataFrame(columns=["ncode", "honbun"])
-    # DataFrameに追加
-    df.loc[0] = [ncode, lines]
+def save_postgresql(ma_df):
     # データベース接続の準備
     engine = create_engine("postgresql://{user}:{password}@{host}:{port}/{dbname}".format(**connection_config))
     # PostgreSQLのテーブルにDataFrameを追加する
-    df.to_sql("ma_data", con=engine, if_exists='append', index=False)
+    ma_df.to_sql("ma_data", con=engine, if_exists='append', index=False)
     print("データベースにデータを保存しました")
 
 
@@ -90,10 +87,10 @@ def main():
     for ncode in df["ncode"]:
         # 該当作品の形態素解析データが既にデータベースに存在していなければ
         if not check_existed(connection, ncode)[0]:
-            print("%sの小説本文のダウンロードを開始します" % ncode)
-            ma_df = morphological_analysis(ncode)
+            print("%sの形態素解析を開始します" % ncode)
+            ma_df = morphological_analysis(connection, ncode)
             # PostgreSQLに形態素解析データを格納
-            dump_to_postgresql(ncode, ma_df)
+            save_postgresql(ma_df)
         else:
             print("%sの形態素解析データは既にデータベースに存在しています" % ncode)
 

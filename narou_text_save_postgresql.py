@@ -114,7 +114,7 @@ def fetch_novel2(ncode):
 
 
 # 本文データをPostgreSQLに格納する関数
-def dump_to_postgresql(ncode, lines):
+def save_postgresql(ncode, lines):
     # DataFrameの作成
     df = pd.DataFrame(columns=["ncode", "honbun"])
     # DataFrameに追加
@@ -154,7 +154,7 @@ def main():
             # 小説が削除されていなければ
             if lines != "deleted":
                 # PostgreSQLに本文データを格納
-                dump_to_postgresql(ncode, lines)
+                save_postgresql(ncode, lines)
             else:
                 # 小説情報を削除するか？
                 delete_metadata(connection, ncode)
