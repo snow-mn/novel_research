@@ -46,7 +46,6 @@ def morphological_analysis(connection, ncode):
     df = pd.read_sql(sql="SELECT honbun FROM text_data WHERE ncode='%s';" % ncode, con=connection)
     # DataFrameから本文データを取り出す
     lines = df["honbun"][0]
-    print(lines)
     # ginzaの準備
     nlp = spacy.load("ja_ginza")
     # DataFrameの作成
@@ -60,6 +59,7 @@ def morphological_analysis(connection, ncode):
         for tok in doc:
             # トークン情報をまとめたリスト
             token_info = [ncode, line_num, tok.i, tok.text, tok.orth_, tok.lemma_, tok.pos_, tok.tag_, tok.head.i, tok.dep_, tok.norm_, tok.ent_iob_, tok.ent_type_]
+            print(token_info)
             # DataFrameのline_num行目に追加
             ma_df.loc[line_num] = token_info
         # 行数カウントを1増やす
@@ -96,4 +96,5 @@ def main():
 
 
 # 実行
-main()
+if __name__ == '__main__':
+    main()

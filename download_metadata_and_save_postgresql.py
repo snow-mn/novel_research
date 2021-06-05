@@ -131,8 +131,7 @@ def save_postgresql(df):
 
 
 #######　関数の実行を指定　##########
-print("start", datetime.datetime.now())
-
-get_all_novel_info()
-
-print("end", datetime.datetime.now())
+if __name__ == '__main__':
+    print("start", datetime.datetime.now())
+    get_all_novel_info()
+    print("end", datetime.datetime.now())
