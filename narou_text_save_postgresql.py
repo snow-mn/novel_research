@@ -99,18 +99,21 @@ def fetch_novel2(ncode):
         soup = BeautifulSoup(res, "html.parser")
         # CSSセレクタで本文を指定
         zenbun = soup.select_one("#novel_honbun").text
+        # 空白文字を取り除く（全角スペース、半角スペース①,②、タブ文字）
+        zenbun = re.sub(r"[\u3000\u0020\u00A0\t]", "", zenbun)
+        # 改行文字で分割してリスト化
+        lines = zenbun.split("\n")
+        # 空白行を削除
+        result = [line for line in lines if line != ""]
+        print(result)
+        print("%sの長さは%s行でした" % (ncode, len(result)))
+        return result
+
+    # 小説が既に削除されているなどの場合
     except error.HTTPError as e:
         print("エラー : ", e)
-
-    # 空白文字を取り除く（全角スペース、半角スペース①,②、タブ文字）
-    zenbun = re.sub(r"[\u3000\u0020\u00A0\t]", "", zenbun)
-    # 改行文字で分割してリスト化
-    lines = zenbun.split("\n")
-    # 空白行を削除
-    result = [line for line in lines if line != ""]
-    print(result)
-    print("%sの長さは%s行でした" % (ncode, len(result)))
-    return result
+        result = "deleted"
+        return result
 
 
 # 本文データをPostgreSQLに格納する関数
