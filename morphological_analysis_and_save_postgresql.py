@@ -54,24 +54,81 @@ def morphological_analysis(connection, ncode):
     # DataFrameの作成
     ma_df = pd.DataFrame(columns=df_columns)
     # 何行目かカウントする変数
-    line_index = 0
+    line_num = 0
+    # 各要素を入れるリスト
+    ncode_list = []
+    # 行番号
+    line_index = []
+    # トークン番号
+    token_index = []
+    # 逐次的なテキストコンテンツ
+    token_text = []
+    # トークンの基本形
+    token_lemma = []
+    # 粗い品詞
+    token_pos = []
+    # きめの細かい品詞
+    token_tag = []
+    # トークンの構造上の親のトークン番号
+    token_head_index = []
+    # 構文依存関係
+    token_dep = []
+    # トークンのテキストの正規化された形式
+    token_norm = []
+    # 名前付きエンティティタイプのIOBコード
+    token_ent_iob = []
+    # 名前付きエンティティタイプ
+    token_ent_type = []
+    # ストップリストかどうか
+    token_is_stop =[]
+    # トークンが含まれるセンテンススパン
+    token_sent = []
+
     # 1行ごとに形態素解析を行う
     for line in tqdm(lines):
         doc = nlp(line)
         # 各トークンの情報を取得
         for tok in doc:
             # トークン情報をまとめたリスト
-            token_info = [ncode, line_index, tok.i, tok.text, tok.lemma_, tok.pos_, tok.tag_, tok.head.i, tok.dep_,
-                          tok.norm_, tok.ent_iob_, tok.ent_type_, tok.is_stop, tok.sent]
+            # token_info = [ncode, line_index, tok.i, tok.text, tok.lemma_, tok.pos_, tok.tag_, tok.head.i, tok.dep_,
+            #               tok.norm_, tok.ent_iob_, tok.ent_type_, tok.is_stop, tok.sent]
             # DataFrameのline_num行目に追加
-            ma_df.loc[line_index] = token_info
+            # ma_df.loc[line_num] = token_info
+            # 要素の追加
+            ncode_list += [ncode]
+            line_index += [line_num]
+            token_index += [tok.i]
+            token_text += [tok.text]
+            token_lemma += [tok.lemma_]
+            token_pos += [tok.pos_]
+            token_tag += [tok.tag_]
+            token_head_index += [tok.head.i]
+            token_dep += [tok.dep_]
+            token_norm += [tok.norm_]
+            token_ent_iob += [tok.ent_iob_]
+            token_ent_type += [tok.ent_type_]
+            token_is_stop += [tok.is_stop]
+            token_sent += [tok.sent]
+
         # 行数カウントを1増やす
-        line_index += 1
+        line_num += 1
+
+    print("リストをDataFrameに変換しています")
+    # リストをDataFrame化
+    ma_df = pd.DataFrame(
+        data={"ncode": ncode, "line_index": line_index, "token_index": token_index, "token_text": token_text,
+              "token_lemma": token_lemma, "token_pos": token_pos, "token_tag": token_tag, "token_head_index": token_head_index,
+              "token_dep": token_dep, "token_norm": token_norm, "token_ent_iob": token_ent_iob, "token_ent_type": token_ent_type,
+              "token_is_stop": token_is_stop, "token_sent": token_sent},
+        columns=df_columns
+    )
+    print(ma_df)
     return ma_df
 
 
 # データベースに格納する関数
 def save_postgresql(ma_df):
+    print("データをデータベースに格納します")
     # データベース接続の準備
     engine = create_engine("postgresql://{user}:{password}@{host}:{port}/{dbname}".format(**connection_config))
     # PostgreSQLのテーブルにDataFrameを追加する
