@@ -3,6 +3,7 @@
 from ginza import *
 import spacy
 import pandas as pd
+import numpy as np
 import psycopg2
 from tqdm import tqdm
 
@@ -69,6 +70,7 @@ def morphological_analysis(connection, ncode):
                "tok.lemma_（トークンの基本形）\u3000" + tok.lemma_ + "\n"
                "tok.pos_（粗い品詞）\u3000" + tok.pos_ + "\n"
                "tok.tag_（きめの細かい品詞）\u3000" + tok.tag_ + "\n"
+               "tok.tag（きめの細かい品詞（数値））\u3000" + str(tok.tag) + "\n"
                "tok.head.i（トークンの構造上の親のトークン番号）\u3000" + str(tok.head.i) + "\n"
                "tok.dep_（構文依存関係）\u3000" + tok.dep_ + "\n"
                "tok.norm_（トークンテキストの正規化された形式）\u3000" + tok.norm_ + "\n"
@@ -79,8 +81,15 @@ def morphological_analysis(connection, ncode):
                "is_oov（語彙外（単語ベクトルがない）かどうか）\u3000" + str(tok.is_oov) + "\n"
                "prob（トークンの単語タイプの平滑化された対数確率推定）\u3000" + str(tok.prob) + "\n"
                "sent（トークンが含まれるセンテンススパン）\u3000" + str(tok.sent) + "\n"
-               "テスト\u3000" + str(tok.similarity)
+               "token.vector（トークンのベクトル）\u3000" + str(tok.vector) + "\n"
             )
+            print(type(tok.sent))
+            print(type(tok.vector))
+            print(tok.vector.tolist())
+            vector = tok.vector.tolist()
+            print(vector[0])
+            print(type(vector[0]))
+            print(np.array(vector))
 
             # エンティティタイプがO以外のものを調査
             if tok.ent_iob_ != "O":
@@ -106,8 +115,6 @@ def morphological_analysis(connection, ncode):
             else:
                 pass
 
-            # DataFrameのline_num行目に追加
-            ma_df.loc[line_num] = token_info
         # 行数カウントを1増やす
         line_num += 1
 

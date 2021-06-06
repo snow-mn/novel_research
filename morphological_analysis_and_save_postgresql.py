@@ -17,11 +17,9 @@ connection_config = {
 }
 
 # DataFrameの列名
-# token_info = [ncode, line_index, tok.i, tok.text, tok.lemma_, tok.pos_, tok.tag_, tok.head.i, tok.dep_,
-#                          tok.norm_, tok.ent_iob_, tok.ent_type_, tok.is_stop, tok.sent]
 df_columns = ["ncode", "line_index", "token_index", "token_text", "token_lemma", "token_pos", "token_tag",
               "token_head_index", "token_dep", "token_norm", "token_ent_iob", "token_ent_type",
-              "token_is_stop", "token_sent"]
+              "token_is_stop", "token_is_oov", "token_vector", "token_sent"]
 
 
 # postgreSQLからデータを取得
@@ -81,6 +79,10 @@ def morphological_analysis(connection, ncode):
     token_ent_type = []
     # ストップリストかどうか
     token_is_stop =[]
+    # 語彙外（単語ベクトルがない）かどうか
+    token_is_oov = []
+    # 単語ベクトル
+    token_vector = []
     # トークンが含まれるセンテンススパン
     token_sent = []
 
@@ -89,11 +91,6 @@ def morphological_analysis(connection, ncode):
         doc = nlp(line)
         # 各トークンの情報を取得
         for tok in doc:
-            # トークン情報をまとめたリスト
-            # token_info = [ncode, line_index, tok.i, tok.text, tok.lemma_, tok.pos_, tok.tag_, tok.head.i, tok.dep_,
-            #               tok.norm_, tok.ent_iob_, tok.ent_type_, tok.is_stop, tok.sent]
-            # DataFrameのline_num行目に追加
-            # ma_df.loc[line_num] = token_info
             # 要素の追加
             ncode_list += [ncode]
             line_index += [line_num]
@@ -108,7 +105,9 @@ def morphological_analysis(connection, ncode):
             token_ent_iob += [tok.ent_iob_]
             token_ent_type += [tok.ent_type_]
             token_is_stop += [tok.is_stop]
-            token_sent += [tok.sent]
+            token_is_oov += [tok.is_oov]
+            token_vector += [tok.vector.tolist()]
+            token_sent += [str(tok.sent)]
 
         # 行数カウントを1増やす
         line_num += 1
@@ -117,9 +116,10 @@ def morphological_analysis(connection, ncode):
     # リストをDataFrame化
     ma_df = pd.DataFrame(
         data={"ncode": ncode, "line_index": line_index, "token_index": token_index, "token_text": token_text,
-              "token_lemma": token_lemma, "token_pos": token_pos, "token_tag": token_tag, "token_head_index": token_head_index,
-              "token_dep": token_dep, "token_norm": token_norm, "token_ent_iob": token_ent_iob, "token_ent_type": token_ent_type,
-              "token_is_stop": token_is_stop, "token_sent": token_sent},
+              "token_lemma": token_lemma, "token_pos": token_pos, "token_tag": token_tag,
+              "token_head_index": token_head_index, "token_dep": token_dep, "token_norm": token_norm,
+              "token_ent_iob": token_ent_iob, "token_ent_type": token_ent_type, "token_is_stop": token_is_stop,
+              "token_is_oov": token_is_oov, "token_vector": token_vector,  "token_sent": token_sent},
         columns=df_columns
     )
     print(ma_df)
