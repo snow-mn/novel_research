@@ -19,7 +19,7 @@ connection_config = {
 # DataFrameの列名
 df_columns = ["ncode", "line_index", "token_index", "token_text", "token_lemma", "token_pos", "token_tag",
               "token_head_index", "token_dep", "token_norm", "token_ent_iob", "token_ent_type",
-              "token_is_stop", "token_is_oov", "token_vector", "token_sent"]
+              "token_is_stop", "token_is_oov", "token_sent"]
 
 
 # postgreSQLからデータを取得
@@ -81,8 +81,6 @@ def morphological_analysis(connection, ncode):
     token_is_stop =[]
     # 語彙外（単語ベクトルがない）かどうか
     token_is_oov = []
-    # 単語ベクトル
-    token_vector = []
     # トークンが含まれるセンテンススパン
     token_sent = []
 
@@ -106,7 +104,6 @@ def morphological_analysis(connection, ncode):
             token_ent_type += [tok.ent_type_]
             token_is_stop += [tok.is_stop]
             token_is_oov += [tok.is_oov]
-            token_vector += [tok.vector.tolist()]
             token_sent += [str(tok.sent)]
 
         # 行数カウントを1増やす
@@ -119,7 +116,7 @@ def morphological_analysis(connection, ncode):
               "token_lemma": token_lemma, "token_pos": token_pos, "token_tag": token_tag,
               "token_head_index": token_head_index, "token_dep": token_dep, "token_norm": token_norm,
               "token_ent_iob": token_ent_iob, "token_ent_type": token_ent_type, "token_is_stop": token_is_stop,
-              "token_is_oov": token_is_oov, "token_vector": token_vector,  "token_sent": token_sent},
+              "token_is_oov": token_is_oov, "token_sent": token_sent},
         columns=df_columns
     )
     print(ma_df)
