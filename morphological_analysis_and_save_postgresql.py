@@ -17,8 +17,11 @@ connection_config = {
 }
 
 # DataFrameの列名
-# [ncode, line_num, tok.i, tok.text, tok.orth_, tok.lemma_, tok.pos_, tok.tag_, tok.head.i, tok.dep_, tok.norm_, tok.ent_iob_, tok.ent_type_]
-df_columns = ["ncode", "line_num", "tok_index", "tok_text", "tok_orth", "tok_lemma", "tok_pos", "tok_tag", "tok_head_index", "tok_dep", "tok_norm", "tok_ent_iob", "tok_ent_type"]
+# token_info = [ncode, line_index, tok.i, tok.text, tok.lemma_, tok.pos_, tok.tag_, tok.head.i, tok.dep_,
+#                          tok.norm_, tok.ent_iob_, tok.ent_type_, tok.is_stop, tok.sent]
+df_columns = ["ncode", "line_index", "token_index", "token_text", "token_lemma", "token_pos", "token_tag",
+              "token_head_index", "token_dep", "token_norm", "token_ent_iob", "token_ent_type",
+              "token_is_stop", "token_sent"]
 
 
 # postgreSQLからデータを取得
@@ -51,19 +54,19 @@ def morphological_analysis(connection, ncode):
     # DataFrameの作成
     ma_df = pd.DataFrame(columns=df_columns)
     # 何行目かカウントする変数
-    line_num = 0
+    line_index = 0
     # 1行ごとに形態素解析を行う
     for line in tqdm(lines):
         doc = nlp(line)
         # 各トークンの情報を取得
         for tok in doc:
             # トークン情報をまとめたリスト
-            token_info = [ncode, line_num, tok.i, tok.text, tok.orth_, tok.lemma_, tok.pos_, tok.tag_, tok.head.i, tok.dep_, tok.norm_, tok.ent_iob_, tok.ent_type_]
-            print(token_info)
+            token_info = [ncode, line_index, tok.i, tok.text, tok.lemma_, tok.pos_, tok.tag_, tok.head.i, tok.dep_,
+                          tok.norm_, tok.ent_iob_, tok.ent_type_, tok.is_stop, tok.sent]
             # DataFrameのline_num行目に追加
-            ma_df.loc[line_num] = token_info
+            ma_df.loc[line_index] = token_info
         # 行数カウントを1増やす
-        line_num += 1
+        line_index += 1
     return ma_df
 
 

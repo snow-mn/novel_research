@@ -1,5 +1,6 @@
 # 形態素解析のテスト
 
+from ginza import *
 import spacy
 import pandas as pd
 import psycopg2
@@ -58,7 +59,8 @@ def morphological_analysis(connection, ncode):
         # 各トークンの情報を取得
         for tok in doc:
             # トークン情報をまとめたリスト
-            token_info = [ncode, line_num, tok.i, tok.text, tok.orth_, tok.lemma_, tok.pos_, tok.tag_, tok.head.i, tok.dep_, tok.norm_, tok.ent_iob_, tok.ent_type_]
+            token_info = [ncode, line_num, tok.i, tok.text, tok.lemma_, tok.pos_, tok.tag_, tok.head.i, tok.dep_,
+                          tok.norm_, tok.ent_iob_, tok.ent_type_, tok.is_stop, tok.sent]
             print(
                "ncode:" + ncode + "\n"
                "line_num（行番号）\u3000" + str(line_num) + "\n"
@@ -74,7 +76,10 @@ def morphological_analysis(connection, ncode):
                "ent_type_（名前付きエンティティタイプ）\u3000" + tok.ent_type_ + "\n"
                "is_stop（ストップリストかどうか）\u3000" + str(tok.is_stop) + "\n"
                "sentiment（ポジティブまたはネガティブを示すスカラー値）\u3000" + str(tok.sentiment) + "\n"
-               "is_oov（語彙外かどうか）\u3000" + str(tok.is_oov) + "\n"
+               "is_oov（語彙外（単語ベクトルがない）かどうか）\u3000" + str(tok.is_oov) + "\n"
+               "prob（トークンの単語タイプの平滑化された対数確率推定）\u3000" + str(tok.prob) + "\n"
+               "sent（トークンが含まれるセンテンススパン）\u3000" + str(tok.sent) + "\n"
+               "テスト\u3000" + str(tok.similarity)
             )
 
             # エンティティタイプがO以外のものを調査
@@ -89,9 +94,15 @@ def morphological_analysis(connection, ncode):
             else:
                 not_stop_list.append(tok.text)
 
-            # ネガポジ
+            # ネガポジ調査
             if tok.sentiment != 0.0:
                 sentiment_list.append([tok.text, tok.sentiment])
+            else:
+                pass
+
+            # 語彙外かどうかの調査
+            if tok.is_oov:
+                is_oob_list.append(tok.text)
             else:
                 pass
 
@@ -104,6 +115,7 @@ def morphological_analysis(connection, ncode):
         print(stop_list)
         print(not_stop_list)
         print(sentiment_list)
+        print(is_oob_list)
 
     return ma_df
 
