@@ -141,7 +141,6 @@ def delete_metadata(connection, ncode):
         # コミット
         connection.commit()
         print("%sが削除されました" % ncode)
-    exit()
 
 
 # メイン関数
