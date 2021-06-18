@@ -131,7 +131,17 @@ def save_postgresql(ncode, lines):
 
 # 参照した小説が既に削除されている場合に小説情報を削除する関数（仮）
 def delete_metadata(connection, ncode):
-    pass
+    print("%sを削除します" % ncode)
+    # データベースからデータを削除するsql文
+    query = "DELETE FROM metadata WHERE ncode='%s';" % ncode
+    # カーソルを生成
+    with connection.cursor() as cur:
+        # sql文を実行
+        cur.execute(query)
+        # コミット
+        connection.commit()
+        print("%sが削除されました" % ncode)
+    exit()
 
 
 # メイン関数
