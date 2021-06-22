@@ -20,8 +20,24 @@ connection_config = {
 # postgreSQLからデータを取得する関数
 def get_postgresql_data(connection):
     # DataFrameでロード（総合評価ポイント降順にソート）
-    df = pd.read_sql(sql="SELECT ncode, keyword FROM metadata ORDER BY global_point DESC;", con=connection)
+    # df = pd.read_sql(sql="SELECT ncode, keyword FROM metadata ORDER BY global_point DESC;", con=connection)
+    # テキストデータが存在するものに絞って取得
+    df = pd.read_sql(sql="SELECT ncode, keyword FROM metadata WHERE ncode IN (SELECT ncode FROM text_data) ORDER BY global_point DESC;", con=connection)
     return df
+
+
+# データベースから一旦データを削除する関数
+def delete_data(connection):
+    print("以前のデータを削除します")
+    # データベースからデータを削除するsql文
+    query = "DELETE FROM keyword_data;"
+    # カーソルを生成
+    with connection.cursor() as cur:
+        # sql文を実行
+        cur.execute(query)
+        # コミット
+        connection.commit()
+        print("以前のデータが削除されました")
 
 
 # データベースに格納する関数
@@ -62,6 +78,8 @@ def main():
     # リストをDataFrameに変換
     keyword_df = pd.DataFrame(ncode_keyword_list, columns=["ncode", "keyword"])
     print(keyword_df)
+    # 以前のデータを削除
+    delete_data(connection)
     # PostgreSQLに格納
     save_postgresql(keyword_df)
 
