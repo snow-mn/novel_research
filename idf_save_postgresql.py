@@ -1,4 +1,4 @@
-# TF値をPostgreSQLに格納するプログラム
+# IDF値をPostgreSQLに格納するプログラム
 
 import pandas as pd
 from sqlalchemy import create_engine
@@ -18,15 +18,20 @@ connection_config = {
 # 形態素解析データのデータベース名
 ma_data_name = "ma_data_not_stop_words"
 
-# TF値を格納するデータベース名（NOUN）
-tf_data_name = "tf_noun_data"
+# IDF値を格納するデータベース名（NOUN）
+# キーワード数20
+idf_data_name = "idf_noun_data_20"
+
+# キーワード集合、キーワード毎の作品集合の上限
+keyword_limit = 20
+ncode_limit = 20
 
 
-# TF値データがPostgreSQLに格納されているかの判定
-def check_existed_tf(connection, ncode):
+# IDF値データがPostgreSQLに格納されているかの判定
+def check_existed_idf(connection, ncode):
     cur = connection.cursor()
     # 既に格納されていればTrueを返すSQL文
-    cur.execute("SELECT EXISTS (SELECT * FROM %s WHERE ncode='%s');" % (tf_data_name, ncode))
+    cur.execute("SELECT EXISTS (SELECT * FROM %s WHERE ncode='%s');" % (idf_data_name, ncode))
     # 結果の取得
     result = cur.fetchone()
     # curを閉じる
@@ -46,6 +51,24 @@ def check_existed_ma(connection, ncode):
     return result
 
 
+# postgreSQLから頻出上位x個のキーワードを取得
+def get_keyword_ranking(connection):
+    # DataFrameでロード（頻出上位降順にソート）
+    df = pd.read_sql(
+        sql="SELECT keyword, COUNT(keyword) FROM keyword_data GROUP BY keyword ORDER BY COUNT(keyword) DESC LIMIT %s" % keyword_limit,
+        con=connection)
+    return df
+
+
+# キーワードから作品コードのリストを取得
+def get_ncode_list(connection, keyword):
+    # DataFrameでロード（総合評価ポイント降順にソート）
+    df = pd.read_sql(
+        sql="SELECT keyword_data.ncode, metadata.global_point FROM keyword_data INNER JOIN metadata ON keyword_data.ncode=metadata.ncode WHERE keyword_data.keyword='%s' ORDER BY metadata.global_point DESC LIMIT %s;" % (keyword, ncode_limit),
+        con=connection)
+    return df
+
+
 # postgreSQLから既にテキストデータが存在する作品コードのデータを取得
 def get_ncode_data(connection):
     # DataFrameでロード（総合評価ポイント降順にソート）
@@ -53,6 +76,27 @@ def get_ncode_data(connection):
         sql="SELECT ncode FROM metadata WHERE ncode IN (SELECT ncode FROM text_data) ORDER BY global_point DESC;",
         con=connection)
     return df
+
+
+# キーワード集合内の各作品の形態素解析データを統合する
+def marge_ma_data(connection, ncode_list, type):
+    # 形態素解析データを入れるDataFrameを作成
+    keyword_ma_df = pd.DataFrame()
+    # 作品コードのリストを順々に読み込む
+    for ncode in tqdm(ncode_list):
+        print("作品コード%sの作品の形態素解析データを読み込みます" % ncode)
+        # 作品の形態素解析データを取得（作品コード、トークンの基本形のみ）
+        ncode_ma_df = get_ma_data(connection, ncode, type)[["ncode", "token_lemma"]]
+        # トークンの基本形について重複を削除
+        ncode_ma_df = ncode_ma_df.drop_duplicates(["token_lemma"])
+        # キーワードの形態素解析データに統合
+        keyword_ma_df = keyword_ma_df.append(ncode_ma_df)
+    # トークンの基本形について重複を削除
+    keyword_ma_df = keyword_ma_df.drop_duplicates(["token_lemma"])
+    print(keyword_ma_df)
+    # 結果を出力
+    return keyword_ma_df
+
 
 
 # postgreSQLから作品コードに対応する形態素解析データを取得
@@ -93,8 +137,8 @@ def get_ma_data(connection, ncode, type):
     return df
 
 
-# TFの計算
-def calculate_tf(connection, ncode):
+# IDFの計算
+def calculate_idf(connection, ncode):
     # postgreSQLから作品コードに対応する形態素解析データを取得
     # 名詞のみのデータを取得
     ma_df = get_ma_data(connection, ncode, 5)
@@ -138,7 +182,7 @@ def save_postgresql(data_df):
     # データベース接続の準備
     engine = create_engine("postgresql://{user}:{password}@{host}:{port}/{dbname}".format(**connection_config))
     # PostgreSQLのテーブルにDataFrameを追加する
-    data_df.to_sql(tf_data_name, con=engine, if_exists='append', index=False)
+    data_df.to_sql(idf_data_name, con=engine, if_exists='append', index=False)
     print("データベースにデータを保存しました")
 
 
@@ -147,21 +191,14 @@ def main():
     print("PostgreSQLに接続しています")
     # PostgreSQLに接続
     connection = psycopg2.connect(**connection_config)
-    # PostgreSQLから作品コードのデータ取得（総合評価ポイント降順で）
-    ncode_df = get_ncode_data(connection)
-    # 作品コードのDataframeを読み込んでいく
-    for ncode in tqdm(ncode_df["ncode"]):
-        # 形態素データがpostgreSQLに格納されていなければ
-        if not check_existed_ma(connection, ncode)[0]:
-            print("%sの形態素解析データはpostgreSQL上に存在していません" % ncode)
-        # TF値がpostgreSQLに格納されていなければ
-        elif not check_existed_tf(connection, ncode)[0]:
-            # TFの計算
-            data_df = calculate_tf(connection, ncode)
-            # PostgreSQLに格納
-            save_postgresql(data_df)
-        else:
-            print("%sのTF値は既にpostgreSQL上に存在しています" % ncode)
+    # PostgreSQLからキーワードリストの取得（頻出上位xキーワード）
+    keyword_df = get_keyword_ranking(connection)
+    # キーワードリストを順々に読み込む
+    for keyword in keyword_df["keyword"]:
+        # キーワードに対応する作品コードリストの取得（総合評価ポイント降順で上位x作品）
+        ncode_df = get_ncode_list(connection, keyword)
+        # キーワード集合内の各作品の形態素解析データを統合する
+        keyword_ma_df = marge_ma_data(connection, ncode_df["ncode"], type=5)
 
 
 # 実行
