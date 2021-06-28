@@ -14,15 +14,16 @@ connection_config = {
     "password": "password"
 }
 
+# キーワード集合、キーワード毎の作品集合の上限
+keyword_limit = 100
+ncode_limit = 50
+
+
 # 形態素解析データのデータベース名
 ma_data_name = "ma_data_not_stop_words"
 
 # キーワードの形態素解析データを保存するデータベース名
-keyword_token_data_name = "keyword_noun_data_20novels"
-
-# キーワード集合、キーワード毎の作品集合の上限
-keyword_limit = 100
-ncode_limit = 20
+keyword_token_data_name = "keyword_noun_data_%snovels" % ncode_limit
 
 # 除外キーワード
 except_list = ["ネット小説大賞九", "書籍化", "ネット小説大賞九感想", "HJ2021", "コミカライズ", "がうがうコン1", "ESN大賞３",
