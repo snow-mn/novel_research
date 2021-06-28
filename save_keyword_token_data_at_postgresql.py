@@ -66,7 +66,7 @@ def marge_ma_data(connection, keyword, ncode_list, type):
     keyword_ma_df = pd.DataFrame()
     # 作品コードのリストを順々に読み込む
     for ncode in tqdm(ncode_list):
-        print("作品コード%sの作品の形態素解析データを読み込みます" % ncode)
+        # print("作品コード%sの作品の形態素解析データを読み込みます" % ncode)
         # 作品の形態素解析データを取得（作品コード、トークンの基本形のみ）
         ncode_ma_df = get_ma_data(connection, ncode, type)[["ncode", "token_lemma"]]
         # トークンの基本形について重複を削除
@@ -93,7 +93,7 @@ def marge_ma_data(connection, keyword, ncode_list, type):
 
 # postgreSQLから作品コードに対応する形態素解析データを取得
 def get_ma_data(connection, ncode, type):
-    print("%sに対応する形態素解析データを取得します" % ncode)
+    # print("%sに対応する形態素解析データを取得します" % ncode)
     # DataFrameでロード（総合評価ポイント降順にソート）
     if type == 0:
         # 全てのデータを取得
