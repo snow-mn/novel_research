@@ -108,8 +108,7 @@ def marge_tf_data(connection, keyword, ncode_list):
         # キーワードのTF値を計算（作品毎のTF値を全て足してから作品数で割る）
         keyword_token_tf = sum(tf_list)/ncode_limit
         # トークンのTF値の組をリストに追加
-        # keyword_tf_list.append([keyword, token, keyword_token_tf])
-        keyword_tf_list += [keyword, token, keyword_token_tf]
+        keyword_tf_list.extend([[keyword, token, keyword_token_tf]])
     # TF値のリストをDataFrameに変換
     keyword_tf_df = pd.DataFrame(keyword_tf_list, columns=["keyword", "token", "tf"])
     # TF値で降順にソート
