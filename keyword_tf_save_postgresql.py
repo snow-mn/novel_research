@@ -18,11 +18,17 @@ connection_config = {
 keyword_limit = 100
 ncode_limit = 20
 
+# 形態素解析データのデータベース名
+ma_data_name = "ma_data_not_stop_words"
+
+# キーワードの形態素解析データが保存されているデータベース名
+keyword_token_data_name = "keyword_noun_data_%snovels" % ncode_limit
+
+# 作品のTF値のデータベース名
+ncode_tf_data_name = "tf_noun_data"
+
 # キーワードのTF値のデータベース名
 keyword_tf_data_name = "keyword_tf_noun_data_%snovels" % ncode_limit
-
-# 特徴ベクトルを保存するデータベース名
-feature_vector_
 
 # 除外キーワード
 except_list = ["ネット小説大賞九", "書籍化", "ネット小説大賞九感想", "HJ2021", "コミカライズ", "がうがうコン1", "ESN大賞３",
@@ -46,8 +52,7 @@ def check_existed_keyword_tf_data(connection, keyword):
 def get_keyword_ranking(connection):
     # DataFrameでロード（頻出上位降順にソート）
     df = pd.read_sql(
-        sql="SELECT keyword, COUNT(keyword) FROM keyword_data WHERE keyword NOT IN %s GROUP BY keyword ORDER BY COUNT(keyword) DESC LIMIT %s" % (
-        except_list2, keyword_limit),
+        sql="SELECT keyword, COUNT(keyword) FROM keyword_data WHERE keyword NOT IN %s GROUP BY keyword ORDER BY COUNT(keyword) DESC LIMIT %s" % (except_list2, keyword_limit),
         con=connection)
     return df
 
@@ -56,8 +61,7 @@ def get_keyword_ranking(connection):
 def get_ncode_list(connection, keyword):
     # DataFrameでロード（総合評価ポイント降順にソート）
     df = pd.read_sql(
-        sql="SELECT keyword_data.ncode, metadata.global_point FROM keyword_data INNER JOIN metadata ON keyword_data.ncode=metadata.ncode WHERE keyword_data.keyword='%s' ORDER BY metadata.global_point DESC LIMIT %s;" % (
-        keyword, ncode_limit),
+        sql="SELECT keyword_data.ncode, metadata.global_point FROM keyword_data INNER JOIN metadata ON keyword_data.ncode=metadata.ncode WHERE keyword_data.keyword='%s' ORDER BY metadata.global_point DESC LIMIT %s;" % (keyword, ncode_limit),
         con=connection)
     return df
 
@@ -102,7 +106,7 @@ def marge_tf_data(connection, keyword, ncode_list):
         # 各作品の任意のトークンについてのTF値の集合を作成
         tf_list = [tf for tok, tf in ncode_tf_list if tok == token]
         # キーワードのTF値を計算（作品毎のTF値を全て足してから作品数で割る）
-        keyword_token_tf = sum(tf_list) / ncode_limit
+        keyword_token_tf = sum(tf_list)/ncode_limit
         # トークンのTF値の組をリストに追加
         keyword_tf_list.extend([[keyword, token, keyword_token_tf]])
     # TF値のリストをDataFrameに変換
