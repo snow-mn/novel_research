@@ -124,6 +124,8 @@ def calculate_overall_score(cosine_similarity_list):
     # 重みをかけて足す（現在重み値考慮せず）
     for cosine_similarity in cosine_similarity_list:
         result += cosine_similarity
+    # 総数で割る
+    result = result / len(cosine_similarity_list)
     return result
 
 
