@@ -147,7 +147,7 @@ def main():
             tf_list = tf_df["tf"].values.tolist()
             # トークン名をキー、TF値を値とした辞書を作成
             tf_dict = dict(zip(token_list, tf_list))
-            print(tf_dict)
+            # print(tf_dict)
             # 特徴ベクトルを入れるリスト
             feature_vector = []
             # 特徴ベクトル用のトークンリストを1個ずつ読み込む
