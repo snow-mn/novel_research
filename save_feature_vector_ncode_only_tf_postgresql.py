@@ -93,7 +93,7 @@ def get_ncode_tf_data(connection, ncode):
 
 # 特徴ベクトルデータをpostgreSQLに格納する関数
 def save_feature_vector_postgresql(connection, ncode, feature_vector):
-    print("作品コード「%s」の特徴ベクトルをデータベースに保存します" % ncode)
+    # print("作品コード「%s」の特徴ベクトルをデータベースに保存します" % ncode)
     cur = connection.cursor()
     # データを格納
     cur.execute("INSERT INTO %s (ncode, feature_vector) VALUES ('%s', ARRAY%s);" % (feature_vector_ncode_tf_data_name, ncode, feature_vector))
@@ -101,7 +101,7 @@ def save_feature_vector_postgresql(connection, ncode, feature_vector):
     cur.close()
     # コミットする
     connection.commit()
-    print("データベースに保存しました")
+    # print("データベースに保存しました")
 
 
 # メイン関数
