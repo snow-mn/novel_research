@@ -33,7 +33,6 @@ keyword_tf_data_name = "keyword_tf_noun_data_%snovels" % ncode_limit
 # 除外キーワード
 except_list = ["ネット小説大賞九", "書籍化", "ネット小説大賞九感想", "HJ2021", "コミカライズ", "がうがうコン1", "ESN大賞３",
                "集英社小説大賞２", "OVL大賞7M", "集英社WEB小説大賞", "ESN大賞２", "キネノベ大賞２"]
-except_list2 = "('ネット小説大賞九', '書籍化', 'ネット小説大賞九感想', 'HJ2021', 'コミカライズ', 'がうがうコン1', 'ESN大賞３', '集英社小説大賞２', 'OVL大賞7M', '集英社WEB小説大賞', 'ESN大賞２', 'キネノベ大賞２')"
 
 
 # TF値のデータがPostgreSQLに格納されているかの判定
@@ -48,11 +47,22 @@ def check_existed_keyword_tf_data(connection, keyword):
     return result
 
 
+# 除外キーワードをSQL文に入れる形にする関数
+def get_except_list_sql(connection):
+    # sql文に入れる用
+    except_list_sql = "("
+    # 作品コードのリストをsql文に書く形式に変更
+    for keyword in except_list:
+        except_list_sql += "'%s'," % keyword
+    except_list_sql = except_list_sql[:-1] + ")"
+    return except_list_sql
+
+
 # postgreSQLから頻出上位x個のキーワードを取得
-def get_keyword_ranking(connection):
+def get_keyword_ranking(connection, except_list_sql):
     # DataFrameでロード（頻出上位降順にソート）
     df = pd.read_sql(
-        sql="SELECT keyword, COUNT(keyword) FROM keyword_data WHERE keyword NOT IN %s GROUP BY keyword ORDER BY COUNT(keyword) DESC LIMIT %s" % (except_list2, keyword_limit),
+        sql="SELECT keyword, COUNT(keyword) FROM keyword_data WHERE keyword NOT IN %s GROUP BY keyword ORDER BY COUNT(keyword) DESC LIMIT %s" % (except_list_sql, keyword_limit),
         con=connection)
     return df
 
@@ -132,10 +142,12 @@ def main():
     print("PostgreSQLに接続しています")
     # PostgreSQLに接続
     connection = psycopg2.connect(**connection_config)
-    # PostgreSQLからキーワードリストの取得（頻出上位xキーワード）
-    keyword_df = get_keyword_ranking(connection)
+    # 除外リストのSQL文用の形を取得
+    except_list_sql = get_except_list_sql(connection)
+    # postgreSQLから頻出上位キーワードの取得
+    keyword_ranking_df = get_keyword_ranking(connection, except_list_sql)
     # キーワードリストを順々に読み込む
-    for keyword in keyword_df["keyword"]:
+    for keyword in keyword_ranking_df["keyword"]:
         print("キーワード「%s」のTF値データを取得します" % keyword)
         # 既にデータがpostgreSQLに保存されていれば
         if check_existed_keyword_tf_data(connection, keyword)[0]:
