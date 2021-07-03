@@ -161,14 +161,19 @@ def main():
             keyword_feature_vector = [float(element) for element in feature_vector_keyword_dict[keyword]]
             # 各キーワードの特徴ベクトルとコサイン類似度の計算
             cosine_similarity = calculate_cosine_similarity(ncode_feature_vector, keyword_feature_vector)
-            print("作品コード「%s」のキーワード「%s」とのコサイン類似度は%sでした" % (ncode, keyword, cosine_similarity))
+            # print("作品コード「%s」のキーワード「%s」とのコサイン類似度は%sでした" % (ncode, keyword, cosine_similarity))
             # リストに追加
             cosine_similarity_list.append(cosine_similarity)
         # 総合スコアの計算
         overall_score = calculate_overall_score(cosine_similarity_list)
         # リストに追加
         overall_score_list.append([ncode, overall_score])
-        print("作品コード「%s」の総合スコアは%sでした" % (ncode, overall_score))
+        # print("作品コード「%s」の総合スコアは%sでした" % (ncode, overall_score))
+        # 総合スコアのリストをDataFrameに変換
+        overall_score_df = pd.DataFrame(overall_score_list, columns=["ncode", "overall_score"])
+        # 総合スコアで降順にソート
+        result_df = overall_score_df.sort_values(by="overall_score", ascending=False)
+        print(result_df)
 
 
 
