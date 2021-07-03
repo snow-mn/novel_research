@@ -3,7 +3,6 @@
 
 import pandas as pd
 import numpy as np
-from decimal import Decimal
 import psycopg2
 from tqdm import tqdm
 
@@ -173,6 +172,8 @@ def main():
     overall_score_df = pd.DataFrame(overall_score_list, columns=["ncode", "overall_score"])
     # 総合スコアで降順にソート
     result_df = overall_score_df.sort_values(by="overall_score", ascending=False)
+    # インデックスの振り直し
+    result_df = result_df.reset_index()
     print(result_df)
 
 
