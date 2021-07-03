@@ -169,11 +169,11 @@ def main():
         # リストに追加
         overall_score_list.append([ncode, overall_score])
         # print("作品コード「%s」の総合スコアは%sでした" % (ncode, overall_score))
-        # 総合スコアのリストをDataFrameに変換
-        overall_score_df = pd.DataFrame(overall_score_list, columns=["ncode", "overall_score"])
-        # 総合スコアで降順にソート
-        result_df = overall_score_df.sort_values(by="overall_score", ascending=False)
-        print(result_df)
+    # 総合スコアのリストをDataFrameに変換
+    overall_score_df = pd.DataFrame(overall_score_list, columns=["ncode", "overall_score"])
+    # 総合スコアで降順にソート
+    result_df = overall_score_df.sort_values(by="overall_score", ascending=False)
+    print(result_df)
 
 
 
