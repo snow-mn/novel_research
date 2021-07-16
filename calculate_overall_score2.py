@@ -154,16 +154,6 @@ def get_recommended_novel_data(connection, ncode_list):
     return df
 
 
-# 推薦小説のデータをPostgreSQLから取得
-def get_recommended_novel_data2(connection, result_list):
-    for ncode, overall_score in result_list:
-        with connection.cursor() as cur:
-            sql_sentence = "",
-            cur.execute(sql_sentence)
-            result = cur.fetchall()
-    return result
-
-
 # メイン関数
 def main():
     print("PostgreSQLに接続しています")
@@ -211,16 +201,13 @@ def main():
     result_df = overall_score_df.sort_values(by="overall_score", ascending=False)
     # インデックスの振り直し
     result_df = result_df.reset_index()
-    # 結果のリスト
-    result_list = result_df[["ncode", "overall_score"]].head(100).values.tolist()
-    print(result_list)
+    # リスト化
+    result_list = result_df.values.tolist()
     # データの取得
     recommended_novel_df = get_recommended_novel_data(connection, result_list)
-    # リスト化
-    recommended_novel_list = recommended_novel_df.values.tolist()
-    print(recommended_novel_list)
     recommended_data = result_df[["ncode", "overall_score"]].merge(recommended_novel_df)
-    print(recommended_data)
+    print(recommended_data.head(100))
+    print(recommended_data.head(100).values.tolist())
 
 
 # 実行
