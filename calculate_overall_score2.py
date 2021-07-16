@@ -1,4 +1,4 @@
-# キーワードを複数選択し、そこから特徴ベクトル同士の類似度計算を行い総合スコアを計算するプログラム
+# キーワードを複数選択し、そこから特徴ベクトル同士の類似度計算を行い総合スコアを計算するプログラム（重み付け考慮）
 # 作品毎に総合スコアの計算後、総合スコア降順にソートし提示する
 
 import pandas as pd
@@ -34,9 +34,13 @@ except_list = ["ネット小説大賞九", "書籍化", "ネット小説大賞�
 
 # 選択キーワード
 select_keyword_list = ["ファンタジー", "魔法", "異世界", "剣と魔法", "勇者", "魔王", "中世", "冒険者", "ギルド", "バトル", "魔物"]
+select_keyword_weighting_list = [10, 8, 4, 8, 2, 2, 6, 5, 3, 10, 6]
 select_keyword_list2 = ["異世界転生", "チート", "異世界", "主人公最強", "転生", "ご都合主義", "無双", "最強", "テンプレ", "俺TUEEE"]
+select_keyword_weighting_list2 = [5, 10, 5, 10, 5, 10, 10, 10, 6, 10]
 select_keyword_list3 = ["ほのぼの", "恋愛", "日常", "ラブコメ", "学園", "青春", "現代", "スクールラブ"]
+select_keyword_weighting_list3 = [8, 10, 7, 10, 7, 10, 9, 7]
 select_keyword_list4 = ["日常", "コメディ", "ギャグ", "コメディー", "スローライフ"]
+select_keyword_weighting_list4 = [4, 10, 10, 10, 3]
 
 
 # 除外キーワードをSQL文に入れる形にする関数
@@ -118,12 +122,12 @@ def calculate_cosine_similarity(ncode_feature_vector, keyword_feature_vector):
 
 
 # 総合スコアの計算
-def calculate_overall_score(cosine_similarity_list):
+def calculate_overall_score(cosine_similarity_list, weighting_list):
     # 結果の値を格納する変数
     result = 0
     # 重みをかけて足す（現在重み値考慮せず）
-    for cosine_similarity in cosine_similarity_list:
-        result += cosine_similarity
+    for cosine_similarity, weight in cosine_similarity_list, weighting_list:
+        result += cosine_similarity * weight
     # 総数で割る
     result = result / len(cosine_similarity_list)
     return result
@@ -166,7 +170,7 @@ def main():
             # リストに追加
             cosine_similarity_list.append(cosine_similarity)
         # 総合スコアの計算
-        overall_score = calculate_overall_score(cosine_similarity_list)
+        overall_score = calculate_overall_score(cosine_similarity_list, select_keyword_weighting_list)
         # リストに追加
         overall_score_list.append([ncode, overall_score])
         # print("作品コード「%s」の総合スコアは%sでした" % (ncode, overall_score))
