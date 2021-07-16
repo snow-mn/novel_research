@@ -129,6 +129,21 @@ def calculate_overall_score(cosine_similarity_list):
     return result
 
 
+# 推薦小説のデータをPostgreSQLから取得
+def get_recommended_novel_data(connection, ncode_list):
+    # sql文に入れる用
+    ncode_list_sql = "("
+    # 作品コードのリストをsql文に書く形式に変更
+    for ncode, overall_score in ncode_list:
+        ncode_list_sql += "'%s'," % ncode
+    ncode_list_sql = ncode_list_sql[:-1] + ")"
+    # DataFrameでロード（総合評価ポイント降順にソート）
+    df = pd.read_sql(
+        sql="SELECT ncode, title, writer, story, keyword FROM metadata WHERE ncode IN %s;" % ncode_list_sql,
+        con=connection)
+    return df
+
+
 # メイン関数
 def main():
     print("PostgreSQLに接続しています")
@@ -176,7 +191,13 @@ def main():
     result_df = overall_score_df.sort_values(by="overall_score", ascending=False)
     # インデックスの振り直し
     result_df = result_df.reset_index()
-    print(result_df[["ncode", "overall_score"]].head(100).values.tolist())
+    # リスト化
+    result_list = result_df[["ncode", "overall_score"]].values.tolist()
+    # データの取得
+    recommended_novel_df = get_recommended_novel_data(connection, result_list)
+    recommended_data = result_df[["ncode", "overall_score"]].merge(recommended_novel_df)
+    print(recommended_data.head(100))
+    print(recommended_data.head(100).values.tolist())
 
 
 # 実行
