@@ -124,8 +124,8 @@ def calculate_overall_score(cosine_similarity_list):
     # 重みをかけて足す（現在重み値考慮せず）
     for cosine_similarity in cosine_similarity_list:
         result += cosine_similarity
-    # 総数で割る
-    result = result / len(cosine_similarity_list)
+    # 総数で割って100でかける
+    result = (result / len(cosine_similarity_list)) * 100
     return result
 
 
@@ -176,7 +176,7 @@ def main():
     result_df = overall_score_df.sort_values(by="overall_score", ascending=False)
     # インデックスの振り直し
     result_df = result_df.reset_index()
-    print(result_df)
+    print(result_df.head(100))
 
 
 # 実行

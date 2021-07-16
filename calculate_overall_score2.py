@@ -186,7 +186,7 @@ def main():
     result_df = overall_score_df.sort_values(by="overall_score", ascending=False)
     # インデックスの振り直し
     result_df = result_df.reset_index()
-    print(result_df)
+    print(result_df.head(100))
 
 
 # 実行
