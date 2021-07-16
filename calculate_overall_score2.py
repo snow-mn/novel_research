@@ -135,7 +135,7 @@ def calculate_overall_score(cosine_similarity_list, weighting_list):
     # 満点の場合のスコア
     full_score = sum(weighting_list)
     # 最終スコアの算出（100点満点）
-    result = (result / weighting_list) * 100
+    result = (result / full_score) * 100
     return result
 
 
