@@ -17,10 +17,10 @@ connection_config = {
 
 # キーワード集合、キーワード毎の作品集合の上限
 keyword_limit = 100
-ncode_limit = 20
+ncode_limit = 100
 
 # 特徴ベクトルに反映するTF値を上位何個までにするか
-tf_num = 100
+tf_num = 1000
 
 # キーワードの特徴ベクトルを保存するデータベース名
 feature_vector_tf_data_name = "feature_vector_%stf_noun_data_%snovels" % (tf_num, ncode_limit)
