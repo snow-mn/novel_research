@@ -125,7 +125,8 @@ def calculate_cosine_similarity(ncode_feature_vector, keyword_feature_vector):
 def calculate_overall_score(cosine_similarity_list, weighting_list):
     list = []
     for i in range(len(cosine_similarity_list)):
-        list += [cosine_similarity_list[i], weighting_list[i]]
+        list.append([cosine_similarity_list[i], weighting_list[i]])
+    print(list)
     # 結果の値を格納する変数
     result = 0
     # 重みをかけて足す（現在重み値考慮せず）
