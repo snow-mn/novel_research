@@ -202,7 +202,7 @@ def main():
     # インデックスの振り直し
     result_df = result_df.reset_index()
     # リスト化
-    result_list = result_df.values.tolist()
+    result_list = result_df[["ncode", "overall_score"]].values.tolist()
     # データの取得
     recommended_novel_df = get_recommended_novel_data(connection, result_list)
     recommended_data = result_df[["ncode", "overall_score"]].merge(recommended_novel_df)
