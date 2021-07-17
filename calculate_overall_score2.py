@@ -156,15 +156,18 @@ def get_recommended_novel_data(connection, ncode_list):
 
 # 推薦結果をテキストファイルに出力
 def export_text_file(recommend_df, keyword_list, weight_list):
-    print(recommend_df)
+    # リスト化
+    recommend_data = recommend_df.values.tolist()
     # 出力するファイル名
     filename = ""
     # ファイル名を作成
     for keyword, weight in zip(keyword_list, weight_list):
         filename += "%s%s" % (keyword, weight)
     f = open("%s.txt" % filename, 'w')
-    for data in recommend_df:
+    for data in recommend_data:
         f.write(data)
+        print(data)
+    f.close()
 
 
 # メイン関数
