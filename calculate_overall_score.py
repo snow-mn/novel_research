@@ -144,6 +144,26 @@ def get_recommended_novel_data(connection, ncode_list):
     return df
 
 
+# 推薦結果をテキストファイルに出力
+def export_text_file(recommend_df, keyword_list):
+    # リスト化（作品名、タイトル、作者名、あらすじ、キーワード）
+    recommend_data = recommend_df.values.tolist()
+    print(recommend_data)
+    # 出力するファイル名
+    filename = ""
+    # ファイル名を作成
+    for keyword in keyword_list:
+        filename += "【%s】" % keyword
+    f = open("%s.txt" % filename, 'w')
+    # 順位
+    index = 0
+    for ncode, overall_score, title, writer, story, keyword in recommend_data:
+        index += 1
+        url = "https://ncode.syosetu.com/%s/" % ncode
+        f.write("【%s位（%s点）】\n作品コード：%s\n作品名：%s\n作者名：%s\nURL：%s\nあらすじ：\n%s\n\n" % (index, overall_score, ncode, title, writer, url, story))
+    f.close()
+
+
 # メイン関数
 def main():
     print("PostgreSQLに接続しています")
@@ -198,6 +218,7 @@ def main():
     recommended_data = result_df[["ncode", "overall_score"]].merge(recommended_novel_df)
     print(recommended_data.head(100))
     print(recommended_data.head(100).values.tolist())
+    export_text_file(recommended_data.head(100), select_keyword_list)
 
 
 # 実行
