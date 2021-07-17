@@ -49,9 +49,7 @@ def get_select_keyword():
         # 改行文字を空白に置換
         line = line.replace("\n", "")
         # 分割
-        key_weight_pair = line.split(":")
-        keyword = key_weight_pair[0]
-        weighting = key_weight_pair[1]
+        keyword, weighting = line.split("：")
         keyword_list += keyword
         weighting_list += weighting
     return keyword_list, weighting_list
