@@ -32,8 +32,11 @@ feature_vector_ncode_tf_data_name = "feature_vector_ncode_%stf_noun_data_%snovel
 except_list = ["ネット小説大賞九", "書籍化", "ネット小説大賞九感想", "HJ2021", "コミカライズ", "がうがうコン1", "ESN大賞３",
                "集英社小説大賞２", "OVL大賞7M", "集英社WEB小説大賞", "ESN大賞２", "キネノベ大賞２"]
 
+# 入力パラメータのディレクトリ
+parameta_dir = "parameta/"
+
 # 選択キーワードのテキストファイル
-select_keyword_text = "parameta1.txt"
+select_keyword_text = parameta_dir + "parameta1.txt"
 
 
 # テキストファイルから選択キーワードと重み付け値の取得
