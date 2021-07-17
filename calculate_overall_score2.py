@@ -158,6 +158,7 @@ def get_recommended_novel_data(connection, ncode_list):
 def export_text_file(recommend_df, keyword_list, weight_list):
     # リスト化（作品名、タイトル、作者名、あらすじ、キーワード）
     recommend_data = recommend_df.values.tolist()
+    print(recommend_data)
     # 出力するファイル名
     filename = ""
     # ファイル名を作成
