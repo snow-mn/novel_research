@@ -151,7 +151,7 @@ def export_text_file(recommend_df, keyword_list, cosine_similarity_dict):
     # 出力するファイル名
     filename = ""
     # ファイル名を作成
-    for keyword, weight in keyword_list:
+    for keyword in keyword_list:
         filename += "【%s】" % keyword
     # 順位
     index = 0
