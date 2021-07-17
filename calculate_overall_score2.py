@@ -51,7 +51,7 @@ def get_select_keyword():
         # 分割
         keyword, weighting = line.split("：")
         keyword_list += keyword
-        weighting_list += weighting
+        weighting_list += float(weighting)
     return keyword_list, weighting_list
 
 
