@@ -154,6 +154,19 @@ def get_recommended_novel_data(connection, ncode_list):
     return df
 
 
+# 推薦結果をテキストファイルに出力
+def export_text_file(recommend_df, keyword_list, weight_list):
+    print(recommend_df)
+    # 出力するファイル名
+    filename = ""
+    # ファイル名を作成
+    for keyword, weight in zip(keyword_list, weight_list):
+        filename += "%s%s" % (keyword, weight)
+    f = open("%s.txt" % filename, 'w')
+    for data in recommend_df:
+        f.write(data)
+
+
 # メイン関数
 def main():
     print("PostgreSQLに接続しています")
@@ -208,6 +221,7 @@ def main():
     recommended_data = result_df[["ncode", "overall_score"]].merge(recommended_novel_df)
     print(recommended_data.head(100))
     print(recommended_data.head(100).values.tolist())
+    export_text_file(recommended_data, select_keyword_list, select_keyword_weighting_list)
 
 
 # 実行
