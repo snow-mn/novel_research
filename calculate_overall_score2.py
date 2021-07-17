@@ -43,7 +43,7 @@ def get_select_keyword():
     keyword_list = []
     weighting_list = []
     # 1行ずつ読み込んでリストに追加
-    with open(select_keyword_text) as f:
+    with open(select_keyword_text, encoding="shift_jis") as f:
         line = f.readlines()
         keyword, weighting = line.split(":")
         keyword_list += keyword
