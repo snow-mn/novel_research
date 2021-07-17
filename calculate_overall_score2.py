@@ -156,7 +156,7 @@ def get_recommended_novel_data(connection, ncode_list):
 
 # 推薦結果をテキストファイルに出力
 def export_text_file(recommend_df, keyword_list, weight_list):
-    # リスト化
+    # リスト化（作品名、タイトル、作者名、あらすじ、キーワード）
     recommend_data = recommend_df.values.tolist()
     # 出力するファイル名
     filename = ""
@@ -164,9 +164,9 @@ def export_text_file(recommend_df, keyword_list, weight_list):
     for keyword, weight in zip(keyword_list, weight_list):
         filename += "%s%s" % (keyword, weight)
     f = open("%s.txt" % filename, 'w')
-    for data in recommend_data:
-        f.write(data)
-        print(data)
+    for ncode, title, writer, keyword in recommend_data:
+        url = "https://ncode.syosetu.com/%s/" % ncode
+        f.write("作品コード：%s\n作品名：%s\n作者名：%s\nURL：%s" % (ncode, title, writer, url))
     f.close()
 
 
