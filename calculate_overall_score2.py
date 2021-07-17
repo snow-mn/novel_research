@@ -163,7 +163,7 @@ def export_text_file(recommend_df, keyword_list, weight_list):
     filename = ""
     # ファイル名を作成
     for keyword, weight in zip(keyword_list, weight_list):
-        filename += "%s%s" % (keyword, weight)
+        filename += "【%s%s】" % (keyword, weight)
     f = open("%s.txt" % filename, 'w')
     # 順位
     index = 0
