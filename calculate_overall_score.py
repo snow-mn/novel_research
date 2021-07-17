@@ -35,6 +35,9 @@ except_list = ["ネット小説大賞九", "書籍化", "ネット小説大賞�
 # 入力パラメータのディレクトリ
 parameta_dir = "parameta/"
 
+# 推薦結果のディレクトリ
+result_dir = "result_dir/"
+
 # 選択キーワードのテキストファイル
 select_keyword_text = parameta_dir + "parameta1.txt"
 
@@ -89,21 +92,6 @@ def get_feature_vector_ncode_data(connection, ncode_list):
         sql="SELECT %s.ncode, %s.feature_vector FROM %s INNER JOIN metadata ON %s.ncode=metadata.ncode WHERE %s.ncode IN %s ORDER BY metadata.global_point;" % (feature_vector_ncode_tf_data_name, feature_vector_ncode_tf_data_name, feature_vector_ncode_tf_data_name, feature_vector_ncode_tf_data_name, feature_vector_ncode_tf_data_name, ncode_list_sql),
         con=connection)
     return df
-
-
-def get_feature_vector_ncode_data2(connection, ncode_list):
-    # sql文に入れる用
-    ncode_list_sql = "("
-    # 作品コードのリストをsql文に書く形式に変更
-    for ncode in ncode_list:
-        ncode_list_sql += "'%s'," % ncode
-    ncode_list_sql = ncode_list_sql[:-1] + ")"
-    # postgreSQLからデータ取得
-    with connection.cursor() as cur:
-        sql_sentence = "SELECT %s.ncode, %s.feature_vector FROM %s INNER JOIN metadata ON %s.ncode=metadata.ncode WHERE %s.ncode IN %s ORDER BY metadata.global_point;" % (feature_vector_ncode_tf_data_name, feature_vector_ncode_tf_data_name, feature_vector_ncode_tf_data_name, feature_vector_ncode_tf_data_name, feature_vector_ncode_tf_data_name, ncode_list_sql)
-        cur.execute(sql_sentence)
-        result = cur.fetchall()
-    return result
 
 
 # postgreSQLからキーワードの特徴ベクトルのデータを取得
@@ -173,7 +161,7 @@ def export_text_file(recommend_df, keyword_list, cosine_similarity_dict):
     # 順位
     index = 0
     # ファイルを上書きモードで作成
-    f = open("%s.txt" % filename, 'w')
+    f = open(result_dir + "%s.txt" % filename, 'w')
     # 1作品ずつ書き込み
     for ncode, overall_score, title, writer, story, keyword in recommend_data:
         # 順位を1ずつ増やす
