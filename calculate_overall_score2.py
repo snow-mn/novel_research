@@ -164,9 +164,9 @@ def export_text_file(recommend_df, keyword_list, weight_list):
     for keyword, weight in zip(keyword_list, weight_list):
         filename += "%s%s" % (keyword, weight)
     f = open("%s.txt" % filename, 'w')
-    for ncode, title, writer, keyword in recommend_data:
+    for ncode, title, writer, story, keyword in recommend_data:
         url = "https://ncode.syosetu.com/%s/" % ncode
-        f.write("作品コード：%s\n作品名：%s\n作者名：%s\nURL：%s" % (ncode, title, writer, url))
+        f.write("作品コード：%s\n作品名：%s\n作者名：%s\nあらすじ：\n%s\nURL：%s" % (ncode, title, writer, story, url))
     f.close()
 
 
