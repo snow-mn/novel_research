@@ -32,15 +32,23 @@ feature_vector_ncode_tf_data_name = "feature_vector_ncode_%stf_noun_data_%snovel
 except_list = ["ネット小説大賞九", "書籍化", "ネット小説大賞九感想", "HJ2021", "コミカライズ", "がうがうコン1", "ESN大賞３",
                "集英社小説大賞２", "OVL大賞7M", "集英社WEB小説大賞", "ESN大賞２", "キネノベ大賞２"]
 
-# 選択キーワード
-select_keyword_list = ["ファンタジー", "魔法", "異世界", "勇者", "魔王", "中世", "冒険者", "ギルド", "バトル", "魔物"]
-select_keyword_weighting_list = [1.0, 0.8, 0.5, 0.2, 0.4, 0.6, 0.4, 0.3, 0.9, 0.6]
-select_keyword_list2 = ["異世界転生", "チート", "異世界", "主人公最強", "転生", "ご都合主義", "無双", "最強", "テンプレ", "俺TUEEE"]
-select_keyword_weighting_list2 = [5, 10, 5, 10, 5, 10, 10, 10, 6, 10]
-select_keyword_list3 = ["ほのぼの", "恋愛", "日常", "ラブコメ", "学園", "青春", "現代", "スクールラブ"]
-select_keyword_weighting_list3 = [8, 10, 7, 10, 7, 10, 9, 7]
-select_keyword_list4 = ["日常", "コメディ", "ギャグ", "コメディー", "スローライフ"]
-select_keyword_weighting_list4 = [4, 10, 10, 10, 3]
+
+# 選択キーワードのテキストファイル
+select_keyword_text = "parameta1.txt"
+
+
+# テキストファイルから選択キーワードと重み付け値の取得
+def get_select_keyword():
+    # キーワードと重み付け値のリスト
+    keyword_list = []
+    weighting_list = []
+    # 1行ずつ読み込んでリストに追加
+    with open(select_keyword_text) as f:
+        line = f.readlines()
+        keyword, weighting = line.split(":")
+        keyword_list += keyword
+        weighting_list += weighting
+    return keyword_list, weighting_list
 
 
 # 除外キーワードをSQL文に入れる形にする関数
@@ -198,6 +206,8 @@ def main():
     feature_vector_ncode_df = get_feature_vector_ncode_data(connection, ncode_list)
     # リストに変換
     feature_vector_ncode_list = feature_vector_ncode_df[["ncode", "feature_vector"]].values.tolist()
+    # 選択キーワードと重み付け値の取得
+    select_keyword_list, select_keyword_weighting_list = get_select_keyword()
     # 選出キーワードの特徴ベクトルデータを取得
     feature_vector_keyword_df = get_feature_vector_selected_keyword_data(connection, select_keyword_list)
     # キーワードと特徴ベクトルのリストに変換
