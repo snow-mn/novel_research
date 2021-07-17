@@ -46,7 +46,12 @@ def get_select_keyword():
         lines = f.readlines()
     # 行リストを1行ずつ読み込んでキーワードと重み付け値のリストに追加
     for line in lines:
-        keyword, weighting = line.split(":")
+        # 改行文字を空白に置換
+        line = line.replace("\n", "")
+        # 分割
+        key_weight_pair = line.split(":")
+        keyword = key_weight_pair[0]
+        weighting = key_weight_pair[1]
         keyword_list += keyword
         weighting_list += weighting
     return keyword_list, weighting_list
