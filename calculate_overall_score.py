@@ -145,22 +145,33 @@ def get_recommended_novel_data(connection, ncode_list):
 
 
 # 推薦結果をテキストファイルに出力
-def export_text_file(recommend_df, keyword_list):
+def export_text_file(recommend_df, keyword_list, cosine_similarity_dict):
     # リスト化（作品名、タイトル、作者名、あらすじ、キーワード）
     recommend_data = recommend_df.values.tolist()
-    print(recommend_data)
     # 出力するファイル名
     filename = ""
     # ファイル名を作成
-    for keyword in keyword_list:
+    for keyword, weight in keyword_list:
         filename += "【%s】" % keyword
-    f = open("%s.txt" % filename, 'w')
     # 順位
     index = 0
+    # ファイルを上書きモードで作成
+    f = open("%s.txt" % filename, 'w')
+    # 1作品ずつ書き込み
     for ncode, overall_score, title, writer, story, keyword in recommend_data:
+        # 順位を1ずつ増やす
         index += 1
+        # コサイン類似度のリストを取得
+        cosine_similarity_list = cosine_similarity_dict[ncode]
+        # テキスト表示用
+        keyword_score_text = ""
+        # 各キーワードとのコサイン類似度を取得
+        for keyword, cosine_similarity in zip(keyword_list, cosine_similarity_list):
+            keyword_score_text = "【%s：%s点】" % (keyword, cosine_similarity * 100)
+        # 作品のURL
         url = "https://ncode.syosetu.com/%s/" % ncode
-        f.write("【%s位（%s点）】\n作品コード：%s\n作品名：%s\n作者名：%s\nURL：%s\nあらすじ：\n%s\n\n" % (index, overall_score, ncode, title, writer, url, story))
+        # ファイルに書き込み
+        f.write("【%s位（総合スコア：%s点）】\n個別スコア：%s\n作品コード：%s\n作品名：%s\n作者名：%s\nURL：%s\nあらすじ：\n%s\n\n" % (index, overall_score, keyword_score_text, ncode, title, writer, url, story))
     f.close()
 
 
@@ -182,6 +193,8 @@ def main():
     # キーワードと特徴ベクトルのリストに変換
     keyword_list = feature_vector_keyword_df["keyword"].values.tolist()
     feature_vector_list = feature_vector_keyword_df["feature_vector"].values.tolist()
+    # 作品コードとコサイン類似度の組を格納する辞書
+    ncode_cosine_similarity_dict = {}
     # キーワードをキー、特徴ベクトルを値とした辞書を作成
     feature_vector_keyword_dict = dict(zip(keyword_list, feature_vector_list))
     # 作品コードと総合スコアを格納するリスト
@@ -200,6 +213,8 @@ def main():
             # print("作品コード「%s」のキーワード「%s」とのコサイン類似度は%sでした" % (ncode, keyword, cosine_similarity))
             # リストに追加
             cosine_similarity_list.append(cosine_similarity)
+        # 辞書に作品コードをキー、コサイン類似度のリストを値として追加
+        ncode_cosine_similarity_dict[ncode] = cosine_similarity_list
         # 総合スコアの計算
         overall_score = calculate_overall_score(cosine_similarity_list)
         # リストに追加
@@ -218,7 +233,7 @@ def main():
     recommended_data = result_df[["ncode", "overall_score"]].merge(recommended_novel_df)
     print(recommended_data.head(100))
     print(recommended_data.head(100).values.tolist())
-    export_text_file(recommended_data.head(100), select_keyword_list)
+    export_text_file(recommended_data.head(100), select_keyword_list, ncode_cosine_similarity_dict)
 
 
 # 実行

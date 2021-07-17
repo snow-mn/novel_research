@@ -177,7 +177,7 @@ def export_text_file(recommend_df, keyword_list, weight_list, cosine_similarity_
         keyword_score_text = ""
         # 各キーワードとのコサイン類似度を取得
         for keyword, cosine_similarity in zip(keyword_list, cosine_similarity_list):
-            keyword_score_text = "【%s：%s点】" % (keyword, cosine_similarity * 100)
+            keyword_score_text += "【%s：%s点】" % (keyword, cosine_similarity * 100)
         # 作品のURL
         url = "https://ncode.syosetu.com/%s/" % ncode
         # ファイルに書き込み
