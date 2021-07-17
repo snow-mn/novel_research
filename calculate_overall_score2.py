@@ -228,7 +228,7 @@ def main():
     recommended_data = result_df[["ncode", "overall_score"]].merge(recommended_novel_df)
     print(recommended_data.head(100))
     print(recommended_data.head(100).values.tolist())
-    export_text_file(recommended_data, select_keyword_list, select_keyword_weighting_list)
+    export_text_file(recommended_data.head(100), select_keyword_list, select_keyword_weighting_list)
 
 
 # 実行
