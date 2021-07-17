@@ -36,7 +36,7 @@ except_list = ["ネット小説大賞九", "書籍化", "ネット小説大賞�
 parameta_dir = "parameta/"
 
 # 推薦結果のディレクトリ
-result_dir = "result_dir/"
+result_dir = "result/"
 
 # 選択キーワードのテキストファイル
 select_keyword_text = parameta_dir + "parameta1.txt"
