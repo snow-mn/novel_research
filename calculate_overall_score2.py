@@ -32,7 +32,6 @@ feature_vector_ncode_tf_data_name = "feature_vector_ncode_%stf_noun_data_%snovel
 except_list = ["ネット小説大賞九", "書籍化", "ネット小説大賞九感想", "HJ2021", "コミカライズ", "がうがうコン1", "ESN大賞３",
                "集英社小説大賞２", "OVL大賞7M", "集英社WEB小説大賞", "ESN大賞２", "キネノベ大賞２"]
 
-
 # 選択キーワードのテキストファイル
 select_keyword_text = "parameta1.txt"
 
@@ -42,9 +41,11 @@ def get_select_keyword():
     # キーワードと重み付け値のリスト
     keyword_list = []
     weighting_list = []
-    # 1行ずつ読み込んでリストに追加
+    # ファイルを読み込む
     with open(select_keyword_text, encoding="shift_jis") as f:
-        line = f.readlines()
+        lines = f.readlines()
+    # 行リストを1行ずつ読み込んでキーワードと重み付け値のリストに追加
+    for line in lines:
         keyword, weighting = line.split(":")
         keyword_list += keyword
         weighting_list += weighting
